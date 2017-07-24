@@ -1,6 +1,9 @@
-# electron-2048
+# electron-template
 
-> electron-2048
+> electron-template
+
+#### Example
+使用命令 `git checkout game-2048`切换到该分支，有一个基于此写的小游戏可供参考！
 
 #### Build Setup
 
