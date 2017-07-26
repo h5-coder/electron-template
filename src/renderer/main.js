@@ -14,7 +14,9 @@ import '../../static/css/element-ui.css'
 //less
 import "./less/index.less"
 
-if (!process.env.IS_WEB) Vue.use(require('vue-electron'))
+if (!process.env.IS_WEB){
+    Vue.use(require('vue-electron'));
+}
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */

@@ -1,6 +1,8 @@
 # electron-template
 
 > electron-template
+> description:
+> electron-vue项目的模版，客户端的开发基于此模版开发。
 
 #### Example
 使用命令 `git checkout game-2048`切换到该分支，有一个基于此写的小游戏可供参考！

@@ -1,4 +1,4 @@
 
-//import lineChartDir from './modules/line-chart-dir.js'
+//import lineChartDir from './modules/directives.js'
 
-export default [/*lineChartDir*/]
+export default [/*directives*/]
