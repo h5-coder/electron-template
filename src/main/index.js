@@ -25,6 +25,9 @@ function createWindow() {
     // 加载应用的 index.html。
     mainWindow.loadURL(winURL)
 
+    // 打开开发者工具。
+    //mainWindow.webContents.openDevTools();
+
     // 当 window 被关闭，这个事件会被触发。
     mainWindow.on('closed', () => {
         // 取消引用 window 对象，如果你的应用支持多窗口的话，
