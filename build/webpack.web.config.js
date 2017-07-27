@@ -13,7 +13,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 let webConfig = {
   devtool: '#cheap-module-eval-source-map',
   entry: {
-    web: path.join(__dirname, '../src/renderer/main.js')
+    web: path.join(__dirname, '../src/main.js')
   },
   module: {
     rules: [
@@ -31,7 +31,7 @@ let webConfig = {
       {
         test: /\.js$/,
         use: 'babel-loader',
-        include: [ path.resolve(__dirname, '../src/renderer') ],
+        include: [ path.resolve(__dirname, '../src') ],
         exclude: /node_modules/
       },
       {
@@ -98,7 +98,7 @@ let webConfig = {
   },
   resolve: {
     alias: {
-      '@': path.join(__dirname, '../src/renderer'),
+      '@': path.join(__dirname, '../src'),
       'vue$': 'vue/dist/vue.esm.js'
     },
     extensions: ['.js', '.vue', '.json', '.css']
