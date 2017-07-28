@@ -9,7 +9,8 @@ if(process.env.NODE_ENV !== 'development') {
 }
 // 保持一个对于 window 对象的全局引用，如果你不这样做，
 // 当 JavaScript 对象被垃圾回收， window 会被自动地关闭
-let mainWindow
+let mainWindow;
+
 const winURL = process.env.NODE_ENV === 'development' ?
     `http://localhost:9080` :
     `file://${__dirname}/index.html`
@@ -17,9 +18,9 @@ const winURL = process.env.NODE_ENV === 'development' ?
 function createWindow() {
     // 创建浏览器窗口。
     mainWindow = new BrowserWindow({
-        height: 563,
+        height: 768,
         useContentSize: true,
-        width: 1200
+        width: 1200,
     })
 
     // 加载应用的 index.html。
