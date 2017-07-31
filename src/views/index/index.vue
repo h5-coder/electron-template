@@ -24,6 +24,7 @@
                 </div>
             </div>
         </main>
+        <!--<webview class="webview" autosize="on" minwidth="576" minheight="500" :src="src"></webview>-->
     </div>
 </template>
 
@@ -35,7 +36,7 @@
         //实例的数据对象
         data() {
             return {
-
+                src: 'https://www.baidu.com/'
             }
         },
         //数组或对象，用于接收来自父组件的数据
@@ -81,6 +82,7 @@
 
 <style lang="less" scoped>
     @import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro');
+
     * {
         box-sizing: border-box;
         margin: 0;
@@ -136,13 +138,11 @@
         margin-bottom: 10px;
     }
 
-
     .doc {
         p {
             color: black;
             margin-bottom: 10px;
         }
-
         button {
             font-size: .8em;
             cursor: pointer;
@@ -156,11 +156,14 @@
             box-sizing: border-box;
             border: 1px solid #4fc08d;
         }
-
         button.alt {
             color: #42b983;
             background-color: transparent;
         }
     }
 
+    .webview {
+        display: flex;
+        height: 480px;
+    }
 </style>

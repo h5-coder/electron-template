@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow,globalShortcut } from 'electron'
 
 /**
  * Set `__static` path to static files in production
@@ -23,6 +23,7 @@ function createWindow() {
         minWidth:1200,
         minHeight:600,
         useContentSize: true,
+        //resizable:false,//改变窗口size
     });
 
     // 加载应用的 index.html。
@@ -38,12 +39,20 @@ function createWindow() {
         // 与此同时，你应该删除相应的元素。
         mainWindow = null
     })
+
+    //注册开发者工具快捷键
+    const retClose = globalShortcut.register('CommandOrControl+B', () => {
+        BrowserWindow.getFocusedWindow().webContents.closeDevTools();
+    });
+    const retOpen = globalShortcut.register('CommandOrControl+N', () => {
+        BrowserWindow.getFocusedWindow().webContents.openDevTools({mode:'undocked'});
+    });
 }
 
 // Electron 会在初始化后并准备
 // 创建浏览器窗口时，调用这个函数。
 // 部分 API 在 ready 事件触发后才能使用。
-app.on('ready', createWindow)
+app.on('ready', createWindow);
 
 // 当全部窗口关闭时退出。
 app.on('window-all-closed', () => {
@@ -52,7 +61,7 @@ app.on('window-all-closed', () => {
     if(process.platform !== 'darwin') {
         app.quit()
     }
-})
+});
 
 app.on('activate', () => {
     // 在这文件，你可以续写应用剩下主进程代码。
@@ -60,7 +69,7 @@ app.on('activate', () => {
     if(mainWindow === null) {
         createWindow()
     }
-})
+});
 
 /**
  * Auto Updater
