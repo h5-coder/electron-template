@@ -1,7 +1,7 @@
-const LandingPage = resolve => require(['@/views/landing-page/landing-page'], resolve)
+const Index = resolve => require(['@/views/index/index'], resolve)
 
 export default {
     path: '/',
-    name: 'landing-page',
-    component: LandingPage
+    name: 'index',
+    component: Index
 }
