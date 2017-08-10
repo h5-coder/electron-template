@@ -14,9 +14,12 @@ import '../static/css/element-ui.css'
 //less
 import "./less/index.less"
 
+Vue.use(ElementUI)
+
 if (!process.env.IS_WEB){
     Vue.use(require('vue-electron'));
 }
+//Vue.config.silent = true;
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */

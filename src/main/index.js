@@ -19,11 +19,17 @@ function createWindow() {
     // 创建浏览器窗口。
     mainWindow = new BrowserWindow({
         width: 1200,
-        height: 768,
+        height: 700,
         minWidth:1200,
         minHeight:600,
         useContentSize: true,
+<<<<<<< HEAD
         //resizable:false,//改变窗口size
+=======
+        frame: false,//创建无边框窗口
+        resizable:false,//改变窗口size
+        webPreferences:{webSecurity: false}
+>>>>>>> feature-template
     });
 
     // 加载应用的 index.html。
