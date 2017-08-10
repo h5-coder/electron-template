@@ -23,9 +23,8 @@ function createWindow() {
         minWidth:1200,
         minHeight:600,
         useContentSize: true,
-        //resizable:false,//改变窗口size
         frame: false,//创建无边框窗口
-        //resizable:false,//改变窗口size2312312312312312
+        resizable:false,//改变窗口size
     });
 
     // 加载应用的 index.html。
