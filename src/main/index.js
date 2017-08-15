@@ -73,6 +73,9 @@ app.on('activate', () => {
     }
 });
 
+//注册协议
+app.setAsDefaultProtocolClient('juzix');
+
 /**
  * Auto Updater
  *
