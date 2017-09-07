@@ -2,12 +2,6 @@
 //  key.js
 //  <project>
 //  钱包管理
-<<<<<<< HEAD
-//  Created by yann_liang on 2017-08-02.
-//  Copyright 2017 yann_liang. All rights reserved.
-//
-import ContractServies from './contract-servies'
-=======
 //  key-manager的git url:http://192.168.9.66/Juzix-ethereum/key-manager/tree/develop
 //  Created by yann_liang on 2017-08-02.
 //  Copyright 2017 yann_liang. All rights reserved.
@@ -28,20 +22,14 @@ import ContractServies from './contract-servies'
 
 import ContractServies from './contract-servies';
 import { ipcMain, ipcRenderer } from 'electron';
->>>>>>> feature-template
 
 const KeyManager = require('key-manager'),
 	{
 		dialog
-<<<<<<< HEAD
-	} = require('electron').remote;
-	
-=======
 	} = require('electron').remote,
 	util = require("console-utility"),
 	EthereumTx = require('ethereumjs-tx');
 
->>>>>>> feature-template
 //文件过滤
 const FILE_FILTERS = [{
 		name: 'Json',
@@ -59,11 +47,6 @@ const FILE_FILTERS = [{
 class Key {
 	constructor() {
 		this.path = ''; //钱包默认保存的路径
-<<<<<<< HEAD
-		this.keyObject = null; //钱包对象
-		this.keyList = []; //钱包对象列表
-		this.privateKey = ''; //钱包私钥
-=======
 		this.keyObject = {}; //钱包对象
 		this.keyList = []; //钱包对象列表
 		this.privateKey = ''; //钱包私钥
@@ -78,56 +61,17 @@ class Key {
 			dwPinType: 1, //PIN类型 0：管理员PIN，1：用户PIN
 			showData: "我爱 this world 呵呵哒",
 		}
->>>>>>> feature-template
 
 	}
 
 	/*
-<<<<<<< HEAD
-	 * 创建钱包证书
-=======
 	 * 创建钱包对象
->>>>>>> feature-template
 	 * username 用户名
 	 * password 密码
 	 * successCB 成功回调 可选
 	 * errorCB 失败回调 可选
 	 */
 	createKey(username, password, successCB, errorCB) {
-<<<<<<< HEAD
-		const keyObject = KeyManager.createKey(username, password);
-
-		keyObject ? KeyManager.exportToFile(keyObject, this.path, '', (errorCore, outpath) => {
-			console.log('createKey', errorCore, outpath);
-			if(!errorCore) {
-				successCB && successCB(outpath);
-			} else {
-				errorCB && errorCB();
-			}
-		}) : (errorCB && errorCB());
-
-	}
-
-	/*
-	 * keystore目录名
-	 * successCB(usernameList) 成功回调 返回用户名列表
-	 * errorCB 失败回调
-	 */
-	getUserList(successCB, errorCB) {
-		KeyManager.importFromDir(this.path, (errorCore, keyObjects) => {
-			console.log('getUserList==>', errorCore, keyObjects);
-			if(!errorCore) {
-				this.keyList = keyObjects;
-				let usernameList = [];
-				for(let i = 0; i < keyObjects.length; i++) {
-					usernameList[i] = keyObjects[i].id;
-				}
-				successCB && successCB(usernameList);
-			} else {
-				errorCB && errorCB();
-			}
-		});
-=======
 		let keyObject = KeyManager.createKey(username, password);
 
 		successCB && successCB(keyObject);
@@ -188,46 +132,12 @@ class Key {
 		} else {
 			errorCB && errorCB(4, '不支持的type类型');
 		}
->>>>>>> feature-template
 	}
 
 	/*
 	 * 登录
 	 * username 用户名
 	 * password 密码
-<<<<<<< HEAD
-	 * successCB 成功回调 可选
-	 * errorCB 失败回调 可选
-	 */
-	login(username, password, successCB, errorCB) {
-		if(username && password) {
-			let keyObject = null;
-			for(let i = 0; i < this.keyList.length; i++) {
-				if(this.keyList[i].id == username) {
-					keyObject = this.keyList[i];
-					break;
-				}
-			}
-
-			KeyManager.recover(password, keyObject, (errorCore, privateKey) => {
-				console.log(errorCore, privateKey)
-				if(!errorCore) {
-					this.privateKey = privateKey;
-					this.keyObject = keyObject;
-					//设置钱包私钥
-					ContractServies.setPrivateKey(privateKey);
-					successCB && successCB();
-				} else {
-					errorCB && errorCB();
-				}
-			});
-		} else if(!username && !password) {
-			console.warn('用户名和密码不能为空');
-		} else if(!username) {
-			console.warn('用户名不能为空');
-		} else if(!password) {
-			console.warn('密码不能为空');
-=======
 	 * type 文件证书类型 1软件证书 2U-key
 	 * successCB 成功回调 可选
 	 * errorCB(errorCode,msg) 失败回调 可选 
@@ -277,15 +187,17 @@ class Key {
 						console.log(errorCode, res);
 						//保存句柄
 						this.uKey.phDev = res.phDev;
-						//判断是否是初始PIN
-						KeyManager.ukeyIsDefaultPin(res.phDev, this.uKey.dwPinType, (errorCode, res1) => {
+
+						KeyManager.ukeyVerifyPin(res.phDev, this.uKey.dwPinType, password, (errorCode, res1) => {
 							console.log(errorCode, res1)
-							if(res1.pbDefaultPin) {
-								errorCB && errorCB(5, '初始密码，请修改');
-							} else {
-								KeyManager.ukeyVerifyPin(res.phDev, this.uKey.dwPinType, password, (errorCode, res2) => {
+							if(errorCode == 0) {
+								//判断是否是初始PIN
+								KeyManager.ukeyIsDefaultPin(res.phDev, this.uKey.dwPinType, (errorCode, res2) => {
 									console.log('ukeyVerifyPin', errorCode, res2);
-									if(errorCode == 0) {
+									if(res2.pbDefaultPin) {
+										console.log(errorCode)
+										errorCB && errorCB(5, '初始密码，请修改');
+									} else {
 										this.uuid = username;
 										this.password = password;
 										//发给主进程
@@ -297,16 +209,19 @@ class Key {
 
 										});
 										successCB && successCB();
-
-									} else if(errorCode == -5) {
-										errorCB && errorCB(8, '密码错误');
-									} else {
-										errorCB && errorCB(errorCode, '异常');
 									}
+
 								})
+
+							} else if(errorCode == -5 && errorCode == -8) {
+								errorCB && errorCB(8, '密码错误');
+							} else {
+								errorCB && errorCB(errorCode, '异常');
 							}
+
 						})
 					} else {
+
 						errorCB && errorCB(errorCode, '异常');
 					}
 				})
@@ -323,7 +238,6 @@ class Key {
 		} else if(!password) {
 			console.warn('密码不能为空');
 			errorCB && errorCB(3, '密码不能为空');
->>>>>>> feature-template
 		}
 
 	}
@@ -337,18 +251,11 @@ class Key {
 		dialog.showSaveDialog({
 			filters: FILE_FILTERS
 		}, (filename) => {
-<<<<<<< HEAD
-			const index = filename.lastIndexOf('\\'),
-				path = filename.substr(0, index),
-				name = filename.substr(index, filenames.length);
-
-=======
 			console.log(filename)
 			const index = filename.lastIndexOf('\\'),
 				path = filename.substr(0, index),
 				name = filename.substr(index, filename.length);
 			console.log('path=', path, 'name=', name)
->>>>>>> feature-template
 			KeyManager.exportToFile(this.keyObject, path, name, (errorCore, outpath) => {
 				console.log('outpath', errorCore, outpath);
 				if(!errorCore) {
@@ -361,14 +268,6 @@ class Key {
 	}
 
 	/*
-<<<<<<< HEAD
-	 * 
-	 * successCB 成功回调 可选
-	 * errorCB 失败回调 可选
-	 */
-	importFile(successCB, errorCB) {
-
-=======
 	 * 导入文件 不需要输入密码
 	 * successCB 成功回调 可选
 	 * errorCB 失败回调 可选
@@ -390,21 +289,12 @@ class Key {
 	 * 待定
 	 */
 	getKeyObjectOfPath(successCB, errorCB) {
->>>>>>> feature-template
 		dialog.showOpenDialog({
 			filters: FILE_FILTERS,
 			//批量导入用
 			/*properties:['openFile','openDirectory']*/
 		}, (filenames) => {
 			//单个导入，取第一个
-<<<<<<< HEAD
-			const filename = filenames[0];
-			KeyManager.restoreKeys(filename, this.path, (errorCore, data) => {
-				if(!errorCore) {
-					//获取最新的钱包对象[]
-					this._updateKeyList();
-					successCB && successCB(usernameList);
-=======
 			const filePath = filenames[0];
 			KeyManager.importFromFilePath(filePath, function(errorCore, keyObject) {
 				if(!errorCore) {
@@ -416,54 +306,16 @@ class Key {
 						usernameList[i] = keyObjects[i].id;
 					}*/
 					successCB && successCB(filePath, keyObject);
->>>>>>> feature-template
 				} else {
 					errorCB && errorCB();
 				}
 			});
-<<<<<<< HEAD
-		});
-
-=======
 
 		});
->>>>>>> feature-template
 	}
 
 	/*
 	 * 重置密码
-<<<<<<< HEAD
-	 * successCB 成功回调 可选
-	 * errorCB 失败回调 可选
-	 */
-	resetPassword(username, newPassword, oldPassword, successCB, errorCB) {
-		let keyObject = null;
-		//找出相应的钱包
-		for(let i = 0; i < this.keyList.length; i++) {
-			if(this.keyList[i].id == username) {
-				keyObject = this.keyList[i];
-				break;
-			}
-		};
-
-		//重置相应钱包的密码
-		KeyManager.resetPassword(oldPassword, newPassword, keyObject, (errorCore, newKeyObject) => {
-			if(!errorCore) {
-				//将新的钱包保存到默认目录
-				KeyManager.exportToFile(newKeyObject, this.path, '', (errorCore, outpath) => {
-					if(!errorCore) {
-						//获取最新的钱包对象[]
-						this._updateKeyList();
-						successCB && successCB(outpath);
-					} else {
-						errorCB && errorCB();
-					}
-				});
-			} else {
-				errorCB && errorCB();
-			}
-		});
-=======
 	 * 
 	 * 
 	 * type 类型
@@ -513,7 +365,6 @@ class Key {
 				}
 			})
 		}
->>>>>>> feature-template
 
 	}
 
@@ -531,8 +382,6 @@ class Key {
 	}
 
 	/*
-<<<<<<< HEAD
-=======
 	 * 解出用户私钥
 	 * password 密码
 	 * keyObject钱包对象
@@ -581,23 +430,24 @@ class Key {
 			let serializedTxHex = "0x" + serializedTx.toString('hex');
 			successCB && successCB(serializedTxHex);
 		} else if(this.type == 2) {
-			rawTx.nonce=0x00;
+			rawTx.nonce = 0x00;
 			console.log(JSON.stringify(rawTx))
 			util.rlp(rawTx, (errorCore, res) => {
 				if(errorCore === 0) {
-					console.log('rlp',errorCore, res)
+					console.log('rlp', errorCore, res)
 					var pbMsgRlp = 'F901FA808504E3B292008502540BE3FF941176FD5DC45001002EB2B893E5EF7C488475640780B901D4B1498E290000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000018A7B226964223A227371732D31222C226E616D65223A22535153222C22706172656E744964223A2261646D696E222C226465736372697074696F6E223A22626C6F636B636861696E20706C6174222C22636F6D6D6F6E4E616D65223A225465737431222C2273746174654E616D65223A224744222C22636F756E7472794E616D65223A22434E222C22656D61696C223A227465737431403132362E636F6D222C2274797065223A312C22656E6F64654C697374223A5B7B227075626B6579223A2230783331643137376235623261626133396531633330366331623333383334643234356538356435373763343332366237363162373334323365636139303063616536366638376432333430633135356634303238353832303663396533656566653830376363323433616636323864623138363064393965373132653535343862222C226970223A223139322E3136382E31302E3335222C22706F7274223A223130303031227D5D2C22726F6C6549644C697374223A5B5D2C2266696C6549644C697374223A5B5D7D000000000000';
 					KeyManager.ukeyECCSign(this.uKey.phDev, res, "我爱 this world 呵呵哒", (errorCore, res2) => {
-							console.log('ukeyECCSign', errorCore, res2)
-							if(errorCore === 0) {
-								successCB && successCB(res2.pbSignRlp);
-							}
-						})
+						console.log('ukeyECCSign', errorCore, res2)
+						if(errorCore === 0) {
+							successCB && successCB(res2.pbSignRlp);
+						}
+					})
 					/*KeyManager.ukeyVerifyPin(this.uKey.phDev, '0', 'jz1234', (code, res1) => {
 						console.log('签名', this.uKey.phDev, res, this.uKey.showData)
 						console.log('验证管理员pin', code, res1);
 						
-					})*/s
+					})*/
+					s
 				}
 			})
 
@@ -638,16 +488,11 @@ class Key {
 	}
 
 	/*
->>>>>>> feature-template
 	 * 私有的 更新钱包对象列表 
 	 */
 	_updateKeyList() {
 		this.keyList = KeyManager.importFromDir(this.path);
-<<<<<<< HEAD
-		console.log(this.keyList)
-=======
 		console.log('软件证书列表', this.keyList)
->>>>>>> feature-template
 	}
 
 }
