@@ -56,8 +56,7 @@ ipcMain.on('synchronous-message', (event, arg) => {
   event.returnValue = 'pong';
 });
 </code></pre>
-<pre>
-	<code>
+<pre><code>
 <script>
     const {ipcRenderer} = require('electron');
 
@@ -69,8 +68,7 @@ ipcMain.on('synchronous-message', (event, arg) => {
 
     ipcRenderer.send('asynchronous-message', 'ping');
 </script>
-	</code>
-</pre>
+</code></pre>
 <h2>5.钱包和U-key</h2>
 
 <h2>6.合约API</h2>
