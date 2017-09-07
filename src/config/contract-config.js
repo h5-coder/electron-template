@@ -10,6 +10,7 @@
 const CONTRACT_CONFIG = {
 	metaCoin: {
 		name: 'MetaCoin',
+<<<<<<< HEAD
 		abi: [{
 				"constant": false,
 				"inputs": [{
@@ -473,6 +474,12 @@ const CONTRACT_CONFIG = {
 		],
 		address: '0x0c013b2c3678d628a01355b6fafce1115cd546d4',
 	},
+=======
+		abi: [],
+		address: '',
+	},
+
+>>>>>>> feature-template
 }
 
 export default CONTRACT_CONFIG;
