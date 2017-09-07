@@ -334,8 +334,6 @@ class ContractServies {
 	constructor() {
 		this.web3 = null;
 		this.provider = localStorage.getItem('chainInfo') ? JSON.parse(localStorage.getItem('chainInfo')).url : 'http://10.10.8.42:6789'; //节点地址18
-		this.privateKey = ''; //用户私钥
-		this.MetaCoin = null;
 		this._contracts = {}; //所有的合约
 
 		this.initWeb3();
@@ -354,27 +352,22 @@ class ContractServies {
 
 		//return this.web3;
 	}
-
+	
+	
+	/*
+	 * 设置节点地址
+	 */
 	setProvider(url) {
 		this.provider = url;
 		this.web3 = new Web3(new Web3.providers.HttpProvider(this.provider));
 	}
 
 	/*
-	 * 设置私钥
-	 * key 私钥
+	 * 获取节点地址
 	 */
-	setPrivateKey(key) {
-			this.privateKey = key;
-
-		}*
-
-		/*
-		 * 获取节点地址
-		 */
-		getProvider() {
-			return this.provider;
-		}
+	getProvider() {
+		return this.provider;
+	}
 
 	/*
 	 * 注册一个内置合约
@@ -480,7 +473,7 @@ class ContractServies {
 	 * cb 回调函数
 	 */
 	sendRawTrasaction(contractName, methodName, argumentList, eventName, cb) {
-		console.log('sendRawTrasaction==>', contractName, methodName, argumentList, eventName, this.privateKey);
+		console.log('sendRawTrasaction==>', contractName, methodName, argumentList, eventName);
 		//console.warn('请先执行addContract添加'+contractName+'合约')
 		const contractInstance = this.getContract(contractName).contract,
 			data = this.getData(contractName, methodName, argumentList),
