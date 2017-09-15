@@ -16,7 +16,7 @@ let Web3 = require('web3'),
 	EthereumTx = require('ethereumjs-tx');
 
 import KeyServies from './key-servise.js'
-console.log(KeyServies)
+
 //内置合约abi,地址
 const DEFAULT_ABI = [{
 		"constant": false,
@@ -326,6 +326,26 @@ const isArray = (o) => {
 			return item;
 		});
 		return result;
+	},
+	dealData = (str) => {
+		const code = parseInt(str.substr(2, 64), 16),
+			start = parseInt(str.substr(66, 64), 16),
+			dataLength = parseInt(str.substr(130, 64), 16) * 2,
+			data = str.substr(194, dataLength);
+		if(dataLength % 2 == 0) { //当输入够偶数位；
+			var StrHex = "";
+			for(var i = 0; i < dataLength; i = i + 2) {
+				var str = data.substr(i, 2); //16进制；
+
+				var n = parseInt(str, 16); //10进制；
+				StrHex = StrHex + String.fromCharCode(n);
+			}
+		}
+		console.log('code==', code, 'data==', data);
+		return {
+			code: code,
+			data: StrHex,
+		}
 	}
 
 //合约类
@@ -334,28 +354,37 @@ class ContractServies {
 	constructor() {
 		this.web3 = null;
 		this.provider = localStorage.getItem('chainInfo') ? JSON.parse(localStorage.getItem('chainInfo')).url : 'http://10.10.8.42:6789'; //节点地址18
+		this.privateKey = ''; //用户私钥
 		this._contracts = {}; //所有的合约
-
-		this.initWeb3();
-
-	}
-
-	initWeb3() {
-		/*if(this.web3 != null) {
-			this.web3 = new Web3(this.web3.currentProvider);
-		} else {
-			this.web3 = new Web3(new Web3.providers.HttpProvider(this.provider));
-		}*/
-		if(this.web3 == null) {
-			this.web3 = new Web3(new Web3.providers.HttpProvider(this.provider));
-		}
-
-		//return this.web3;
+		this.callbacks = {}; //存放sendRawTrasaction回调函数
+		this.wrapCount = 60; //轮询次数
+		this.timeout = 60; //超时时间
 	}
 
 	setProvider(url) {
 		this.provider = url;
-		this.web3 = new Web3(new Web3.providers.HttpProvider(this.provider));
+		try {
+			this.web3 = new Web3(new Web3.providers.HttpProvider(this.provider));
+			this.initRegisterContract();
+		} catch(e) {
+			alert('sorry,找不到链！！！')
+		}
+	}
+
+	/*
+	 * 设置私钥
+	 * key 私钥
+	 */
+	setPrivateKey(key) {
+		this.privateKey = key;
+
+	}
+	/*
+	 * 设置私钥
+	 * key 私钥
+	 */
+	setTimeout(time) {
+		this.timeout = time;
 	}
 
 	/*
@@ -372,7 +401,6 @@ class ContractServies {
 	 * address 合约地址    来源：合约部署后的地址 
 	 */
 	initRegisterContract(ABI = DEFAULT_ABI, address = DEFAULT_ADDRESS) {
-
 		let REGContract = this.web3.eth.contract(ABI),
 			_registerInstance = REGContract.at(address),
 			registerInstance = {
@@ -392,37 +420,32 @@ class ContractServies {
 	 * moduleName  模块名字  来源：合约  没必传 默认查询SystemModuleManager
 	 * moduleVersion 模块版本 来源：合约 没必传 默认查询0.0.1.0版本
 	 * 
-	 * //
 	 */
-	addContract(contractName, ABI, address = '0x0000000000000000000000000000000000000000', version = '0.0.1.0', moduleName = 'SystemModuleManager', moduleVersion = '0.0.1.0') {
-		//防止重复添加合约
-		if(this.getContract(contractName) === undefined) {
-			//内置合约是否注册
-			this._contracts["RegisterManager"] ? '' : this.initRegisterContract();
-			let register = this._contracts["RegisterManager"].contract,
-				//通过内置合约查找其他合约地址
-				queryAddress = register.getContractAddress.call(moduleName, moduleVersion, contractName, version);
-			//console.log('queryAddress',queryAddress,address)
+	addContract(contractName, ABI, address, version = '0.0.1.0', moduleName = 'SystemModuleManager', moduleVersion = '0.0.1.0') {
+		//内置合约是否注册
+		this._contracts["RegisterManager"] ? '' : this.initRegisterContract();
+		let register = this._contracts["RegisterManager"].contract,
+			//通过内置合约查找其他合约地址
+			queryAddress = register.getContractAddress.call(moduleName, moduleVersion, contractName, version);
 
-			if(queryAddress != "0x0000000000000000000000000000000000000000") {
-				address = queryAddress;
-			}
+		if(queryAddress != "0x0000000000000000000000000000000000000000") {
+			address = queryAddress;
+		} else if(address === null || address == "(null)") { //空地址
+			address = "0x0000000000000000000000000000000000000000";
+		} else {}
 
-			let ContractABI = this.web3.eth.contract(ABI),
-				contractInstance = ContractABI.at(address),
-				registerInstance = {
-					ABI: ABI,
-					address: address,
-					contract: contractInstance,
-					version: version,
-					moduleName: moduleName,
-					moduleVersion: moduleVersion,
-				};
+		let ContractABI = this.web3.eth.contract(ABI),
+			contractInstance = ContractABI.at(address),
+			registerInstance = {
+				ABI: ABI,
+				address: address,
+				contract: contractInstance,
+				version: version,
+				moduleName: moduleName,
+				moduleVersion: moduleVersion,
+			};
 
-			this._contracts[contractName] = registerInstance;
-		} else {
-			return
-		}
+		this._contracts[contractName] = registerInstance;
 
 	}
 
@@ -441,21 +464,33 @@ class ContractServies {
 	 * 返回结果
 	 */
 	call(contractName, methodName, argumentList) { //address 合约地址
+		try {
+			console.log('call方法的url' + this.provider, argumentList);
+			const contractInstance = this.getContract(contractName).contract;
+			console.log(contractInstance);
+			//把json对象转为json字符串
+			//argumentList = dealArgumentList(argumentList);
 
-		const contractInstance = this.getContract(contractName).contract;
-		//把json对象转为json字符串
-		//argumentList = dealArgumentList(argumentList);
+			//加上from
+			console.log(argumentList);
+			argumentList.push({
+				from: KeyServies.getAddress()
+			});
+			console.log(argumentList);
 
-		//加上from
-		argumentList.push({
-			from: KeyServies.getAddress()
-		});
+			let result = contractInstance[methodName].apply(null, argumentList);
+			console.log("result:", result);
 
-		let result = contractInstance[methodName].apply(null, argumentList);
+			return JSON.parse(result);
+		} catch(e) {
+			console.warn(e);
+			return {
+				ret: 999,
+				messge: '合约异常',
+				data: '',
 
-		console.log("result:", result);
-
-		return JSON.parse(result);
+			};
+		}
 
 	}
 
@@ -467,7 +502,7 @@ class ContractServies {
 	 * cb 回调函数
 	 */
 	sendRawTrasaction(contractName, methodName, argumentList, eventName, cb) {
-		console.log('sendRawTrasaction==>', contractName, methodName, argumentList, eventName, this.privateKey);
+		console.log('sendRawTrasaction==>', contractName, methodName, argumentList, this.privateKey);
 		//console.warn('请先执行addContract添加'+contractName+'合约')
 		const contractInstance = this.getContract(contractName).contract,
 			data = this.getData(contractName, methodName, argumentList),
@@ -477,16 +512,21 @@ class ContractServies {
 				//防重 每次都生成一个新的nonce，用过之后就失效了
 				nonce: this.web3.nonce(),
 				gasPrice: 21000000000,
-				gasLimit: 9999999999,
+				gasLimit: 843314949521407,
 				to: contractInstance.address,
 				value: 0,
 				data: data,
 			}; //下删
-
+		console.log('txParams', txParams);
 		//钱包签名
 		KeyServies.sign(txParams, (serializedTxHex) => {
 			let hash = this.web3.eth.sendRawTransaction(serializedTxHex);
-			this.watchEvent(contractName, eventName, hash, cb);
+			//this.watchEvent(contractName, eventName, hash, cb);
+			this.callbacks[hash] = {
+				cb: cb,
+				wrapCount: this.wrapCount,
+			};
+			this.getTransactionReceipt(hash);
 		})
 		/*
 		if(this.privateKey) {
@@ -524,7 +564,6 @@ class ContractServies {
 		//把json对象转为json字符串
 		argumentList = dealArgumentList(argumentList);
 		if(isArray(argumentList)) { //数组
-			console.log(contractInstance[methodName].getData.apply(null, argumentList))
 			return contractInstance[methodName].getData.apply(null, argumentList);
 		} else if(typeof argumentList == 'string') { //字符串
 			return contractInstance[methodName].getData(argumentList);
@@ -553,7 +592,6 @@ class ContractServies {
 				toBlock: 'latest'
 			});
 			MyEvent.watch(function(errorCode, result) {
-				console.log(result)
 				if(result.transactionHash == hash) {
 					MyEvent.stopWatching();
 					let code = '';
@@ -569,9 +607,36 @@ class ContractServies {
 					cb && cb(code, result.args._info);
 				}
 			});
-			setTimeout
 		}, 1000);
 
+	}
+
+	getTransactionReceipt(hash) {
+		console.log('hash', hash);
+
+		let id = '',
+			result = this.web3.eth.getTransactionReceipt(hash),
+			data = {};
+		if(result && result.transactionHash) {
+			clearTimeout(id);
+			if(hash == result.transactionHash && result.logs) {
+				data = dealData(result.logs[0].data);
+				this.callbacks[hash].cb(data.code, data.data);
+				delete this.callbacks[hash];
+			}
+		} else {
+			if(this.callbacks[hash].wrapCount--) {
+				console.log(this.callbacks[hash].wrapCount);
+				id = setTimeout(() => {
+					this.getTransactionReceipt(hash);
+				}, 1000); //this.timeout / this.wrapCount
+			} else {
+				this.callbacks[hash].cb(1000, '超时');
+				console.warn('sendRawTrasaction超时');
+				id = '';
+				delete this.callbacks[hash];
+			}
+		}
 	}
 
 	/*

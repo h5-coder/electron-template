@@ -21,7 +21,7 @@
  */
 
 import ContractServies from './contract-servies';
-import { ipcMain, ipcRenderer } from 'electron';
+import { ipcRenderer } from 'electron';
 
 const KeyManager = require('key-manager'),
 	{
@@ -29,7 +29,7 @@ const KeyManager = require('key-manager'),
 	} = require('electron').remote,
 	util = require("console-utility"),
 	EthereumTx = require('ethereumjs-tx');
-
+console.log(KeyManager)
 //文件过滤
 const FILE_FILTERS = [{
 		name: 'Json',
@@ -71,8 +71,8 @@ class Key {
 	 * successCB 成功回调 可选
 	 * errorCB 失败回调 可选
 	 */
-	createKey(username, password, successCB, errorCB) {
-		let keyObject = KeyManager.createKey(username, password);
+	createKey(account,username, password, successCB, errorCB) {
+		let keyObject = KeyManager.createKey(account,username, password);
 
 		successCB && successCB(keyObject);
 
@@ -86,7 +86,7 @@ class Key {
 	 * errorCB 失败回调 可选
 	 */
 	createFile(keyObject, successCB, errorCB) {
-		KeyManager.exportToFile(keyObject, this.path, '', (errorCore, outpath) => {
+		KeyManager.exportToFile(keyObject, this.path, '', false,(errorCore, outpath) => {
 			if(!errorCore) {
 				successCB && successCB(keyObject, outpath);
 			} else {
@@ -116,11 +116,16 @@ class Key {
 
 		if(type == 1) {
 			//回调的有问题 用同步
-			this.keyList = KeyManager.importFromDir(this.path);
-			let usernameList = this.keyList.map(function(item, index, input) {
-				return item.username;
-			});
-			successCB && successCB(usernameList);
+			//this.keyList = KeyManager.importFromDir(this.path);
+			KeyManager.importFromDir(this.path, (code, keyList) => {
+				this.keyList = keyList;
+				let usernameList = keyList.map(function(item, index, input) {
+					return item.account;
+				});
+
+				successCB && successCB(usernameList);
+			})
+
 		} else if(type == 2) {
 			const result = KeyManager.ukeyEnumDevice()
 			if(result.err == 0) {
@@ -149,7 +154,7 @@ class Key {
 			if(type == 1) {
 				let keyObject = null;
 				for(let i = 0; i < this.keyList.length; i++) {
-					if(this.keyList[i].username == username) {
+					if(this.keyList[i].account == username) {
 						keyObject = this.keyList[i];
 						break;
 					}
@@ -165,10 +170,10 @@ class Key {
 						//发给主进程
 						ipcRenderer.send('event', 'user', 'setUserInfo', {
 							address: keyObject.address,
-							uuid: keyObject.id,
+							uuid: keyObject.account,
 							privateKey: privateKey,
 							type: 1,
-
+							password: password,
 						});
 
 						//设置钱包私钥
@@ -179,7 +184,20 @@ class Key {
 					}
 				});
 			} else if(type == 2) {
-				//创建USBKEY设备上下文并打开USBKEY设备
+				/*ipcRenderer.send('event', 'wallet', 'login', {
+					username: username,
+					password: password,
+					type: type,
+				},'login999');
+				ipcRenderer.on('callback',(event,callbackId,res)=>{
+					console.log(callbackId,res)
+					if(res.code == 0) {
+						successCB && successCB();
+					} else {
+						errorCB && errorCB(res.code, '');
+					}
+				})*/
+
 				KeyManager.ukeyOpenDevice(username, (errorCode, res) => {
 					console.log('创建USBKEY设备上下文并打开USBKEY设备', res);
 					this.type = 2;
@@ -206,15 +224,17 @@ class Key {
 											uuid: username,
 											privateKey: '',
 											type: 2,
-
+											password: password,
 										});
+
+										ipcRenderer.send('setPhDev', res.phDev);
 										successCB && successCB();
 									}
 
 								})
 
-							} else if(errorCode == -5 && errorCode == -8) {
-								errorCB && errorCB(8, '密码错误');
+							} else if(errorCode == -5 || errorCode == -8) {
+								errorCB && errorCB(8, res1.pdwRetryCount);//密码错误 错误码 重试次数
 							} else {
 								errorCB && errorCB(errorCode, '异常');
 							}
@@ -256,7 +276,7 @@ class Key {
 				path = filename.substr(0, index),
 				name = filename.substr(index, filename.length);
 			console.log('path=', path, 'name=', name)
-			KeyManager.exportToFile(this.keyObject, path, name, (errorCore, outpath) => {
+			KeyManager.exportToFile(this.keyObject, path, name, false,(errorCore, outpath) => {
 				console.log('outpath', errorCore, outpath);
 				if(!errorCore) {
 					successCB && successCB(outpath);
@@ -273,14 +293,16 @@ class Key {
 	 * errorCB 失败回调 可选
 	 */
 	importFile(keyObject, successCB, errorCB) {
-		KeyManager.exportToFile(keyObject, this.path, keyObject.username + '.json', (errorCore, files) => {
+		console.log('现在正在开始导入文件')
+		KeyManager.exportToFile(keyObject, this.path, keyObject.account + '.json',false, (errorCore, files) => {
+			console.log('现在正在开始导入文件返回的是：')
 			console.log(errorCore, files)
 			if(!errorCore) {
 				//获取最新的钱包对象[]
 				this._updateKeyList();
 				successCB && successCB();
 			} else {
-				errorCB && errorCB();
+				errorCB && errorCB(errorCore);
 			}
 		});
 	}
@@ -325,22 +347,22 @@ class Key {
 	 */
 	resetPassword(username, newPassword, oldPassword, type, successCB, errorCB) {
 		type = type || this.type;
-
 		if(type == 1) {
 			let keyObject = null;
 			//找出相应的钱包
 			for(let i = 0; i < this.keyList.length; i++) {
-				if(this.keyList[i].id == username) {
+				if(this.keyList[i].account == username) {
 					keyObject = this.keyList[i];
 					break;
 				}
 			};
-
+			
 			//重置相应钱包的密码
 			KeyManager.resetPassword(oldPassword, newPassword, keyObject, (errorCore, newKeyObject) => {
 				if(!errorCore) {
 					//将新的钱包保存到默认目录
-					KeyManager.exportToFile(newKeyObject, this.path, '', (errorCore, outpath) => {
+					KeyManager.exportToFile(newKeyObject, this.path, '',true, (errorCore, outpath) => {
+						console.log(errorCore, outpath)
 						if(!errorCore) {
 							//获取最新的钱包对象[]
 							this._updateKeyList();
@@ -367,6 +389,17 @@ class Key {
 		}
 
 	}
+	
+	importFromAccount(accout,successCB, errorCB){
+		KeyManager.importFromAccount(accout,this.path,(errorCode,keyObject)=>{
+			console.log('fdasfsafasa====>'+errorCode);
+			if(errorCode==0){
+				successCB&&successCB(keyObject);
+			}else{
+				errorCB&&errorCB(errorCode);
+			}
+		})
+	}
 
 	/*
 	 * 设置钱包的属性，属性值
@@ -376,7 +409,7 @@ class Key {
 	setWallet(key, value) {
 		this.keyObject[key] = value;
 		//写入文件
-		KeyManager.exportToFile(this.keyObject, this.path, '');
+		KeyManager.exportToFile(this.keyObject, this.path, '',true);
 		//更新钱包对象列表 
 		this._updateKeyList();
 	}
@@ -391,6 +424,7 @@ class Key {
 	recover(password, keyObject, successCB, errorCB) {
 		console.log(password, keyObject)
 		KeyManager.recover(password, keyObject, (errorCore, privateKey) => {
+			this.uuid = keyObject.account;
 			console.log(errorCore, privateKey);
 			if(!errorCore) {
 				this.privateKey = privateKey;
@@ -430,26 +464,27 @@ class Key {
 			let serializedTxHex = "0x" + serializedTx.toString('hex');
 			successCB && successCB(serializedTxHex);
 		} else if(this.type == 2) {
-			rawTx.nonce = 0x00;
-			console.log(JSON.stringify(rawTx))
-			util.rlp(rawTx, (errorCore, res) => {
+			ipcRenderer.send('event', 'wallet', 'sign', rawTx, 'signFromExe');
+			ipcRenderer.on('callback', (event, callbackId, res) => {
+				console.log(callbackId, res)
+				if(callbackId == 'signFromExe' && res.code == 0) {
+					successCB && successCB(res.data);
+				} else {
+					errorCB && errorCB(res.code, '');
+				}
+			})
+			/*util.rlp(rawTx, (errorCore, res) => {
 				if(errorCore === 0) {
-					console.log('rlp', errorCore, res)
-					var pbMsgRlp = 'F901FA808504E3B292008502540BE3FF941176FD5DC45001002EB2B893E5EF7C488475640780B901D4B1498E290000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000018A7B226964223A227371732D31222C226E616D65223A22535153222C22706172656E744964223A2261646D696E222C226465736372697074696F6E223A22626C6F636B636861696E20706C6174222C22636F6D6D6F6E4E616D65223A225465737431222C2273746174654E616D65223A224744222C22636F756E7472794E616D65223A22434E222C22656D61696C223A227465737431403132362E636F6D222C2274797065223A312C22656E6F64654C697374223A5B7B227075626B6579223A2230783331643137376235623261626133396531633330366331623333383334643234356538356435373763343332366237363162373334323365636139303063616536366638376432333430633135356634303238353832303663396533656566653830376363323433616636323864623138363064393965373132653535343862222C226970223A223139322E3136382E31302E3335222C22706F7274223A223130303031227D5D2C22726F6C6549644C697374223A5B5D2C2266696C6549644C697374223A5B5D7D000000000000';
-					KeyManager.ukeyECCSign(this.uKey.phDev, res, "我爱 this world 呵呵哒", (errorCore, res2) => {
+					console.log('rlp', errorCore, res, this.getAddress());
+
+					KeyManager.ukeyECCSign(this.uKey.phDev, res, this.uKey.showData, (errorCore, res2) => {
 						console.log('ukeyECCSign', errorCore, res2)
 						if(errorCore === 0) {
 							successCB && successCB(res2.pbSignRlp);
 						}
 					})
-					/*KeyManager.ukeyVerifyPin(this.uKey.phDev, '0', 'jz1234', (code, res1) => {
-						console.log('签名', this.uKey.phDev, res, this.uKey.showData)
-						console.log('验证管理员pin', code, res1);
-						
-					})*/
-					s
 				}
-			})
+			})*/
 
 			//return ;
 		} else {
