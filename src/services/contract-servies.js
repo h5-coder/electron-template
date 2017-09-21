@@ -8,12 +8,13 @@
 //  Copyright 2017 yann_liang. All rights reserved.
 
 //  2017/8/9
-//		合约的操作流程  addContract=》call/sendRawTrasaction 添加合约=》调用合约
-//			
+//	合约的操作流程  addContract=》call/sendRawTrasaction 添加合约=》调用合约
+//	2017/9/21
+//  sendRawTrasaction改为		
 
 //引入web3
-let Web3 = require('web3'),
-	EthereumTx = require('ethereumjs-tx');
+let Web3 = require('web3');
+	//EthereumTx = require('ethereumjs-tx');
 
 import KeyServies from './key-servise.js'
 
@@ -421,7 +422,7 @@ class ContractServies {
 	 * moduleVersion 模块版本 来源：合约 没必传 默认查询0.0.1.0版本
 	 * 
 	 */
-	addContract(contractName, ABI, address, version = '0.0.1.0', moduleName = 'SystemModuleManager', moduleVersion = '0.0.1.0') {
+	addContract(contractName, ABI, address = '0x0000000000000000000000000000000000000000', version = '0.0.1.0', moduleName = 'SystemModuleManager', moduleVersion = '0.0.1.0') {
 		//内置合约是否注册
 		this._contracts["RegisterManager"] ? '' : this.initRegisterContract();
 		let register = this._contracts["RegisterManager"].contract,
@@ -430,9 +431,7 @@ class ContractServies {
 
 		if(queryAddress != "0x0000000000000000000000000000000000000000") {
 			address = queryAddress;
-		} else if(address === null || address == "(null)") { //空地址
-			address = "0x0000000000000000000000000000000000000000";
-		} else {}
+		}
 
 		let ContractABI = this.web3.eth.contract(ABI),
 			contractInstance = ContractABI.at(address),
@@ -465,21 +464,19 @@ class ContractServies {
 	 */
 	call(contractName, methodName, argumentList) { //address 合约地址
 		try {
-			console.log('call方法的url' + this.provider, argumentList);
+			console.log('call==>\n' +'合约名：',contractName,'\n方法名：',methodName, argumentList,this.provider);
 			const contractInstance = this.getContract(contractName).contract;
-			console.log(contractInstance);
+			//console.log(contractInstance);
 			//把json对象转为json字符串
 			//argumentList = dealArgumentList(argumentList);
 
 			//加上from
-			console.log(argumentList);
 			argumentList.push({
 				from: KeyServies.getAddress()
 			});
-			console.log(argumentList);
 
 			let result = contractInstance[methodName].apply(null, argumentList);
-			console.log("result:", result);
+			console.log("result:\n", result);
 
 			return JSON.parse(result);
 		} catch(e) {
@@ -612,7 +609,7 @@ class ContractServies {
 	}
 
 	getTransactionReceipt(hash) {
-		console.log('hash', hash);
+		console.log('getTransactionReceipt hash==>', hash);
 
 		let id = '',
 			result = this.web3.eth.getTransactionReceipt(hash),
@@ -626,7 +623,7 @@ class ContractServies {
 			}
 		} else {
 			if(this.callbacks[hash].wrapCount--) {
-				console.log(this.callbacks[hash].wrapCount);
+				console.log(this.wrapCount-this.callbacks[hash].wrapCount);
 				id = setTimeout(() => {
 					this.getTransactionReceipt(hash);
 				}, 1000); //this.timeout / this.wrapCount

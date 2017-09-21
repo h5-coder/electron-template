@@ -1,18 +1,28 @@
-import { app, BrowserWindow, globalShortcut, ipcMain } from 'electron'
+import { nativeImage, app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu } from 'electron'
 import god from './god'
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+const {
+	exec
+} = require('child_process');
 
-clearCache() //清理缓存。不然很坑爹
+clearCache(); //清理缓存。不然很坑爹
 
 if(process.env.NODE_ENV !== 'development') {
-	global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
+	global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\');
+	//autoRunDriver();
 }
 // 保持一个对于 window 对象的全局引用，如果你不这样做，
 // 当 JavaScript 对象被垃圾回收， window 会被自动地关闭
-let mainWindow;
+let mainWindow, tray = null;
 
 const winURL = process.env.NODE_ENV === 'development' ?
 	`http://localhost:9080` :
-	`file://${__dirname}/index.html`
+	`file://${__dirname}/index.html`,
+	iconPath = process.env.NODE_ENV === 'development' ?
+	`./static/images/48x48.png` :
+	path.join(app.getPath('exe'), '..', '48x48.png');
 
 function createWindow() {
 	// 创建浏览器窗口。
@@ -33,7 +43,7 @@ function createWindow() {
 	mainWindow.loadURL(winURL);
 
 	// 打开开发者工具。
-	mainWindow.webContents.openDevTools();
+	//mainWindow.webContents.openDevTools();
 
 	// 当 window 被关闭，这个事件会被触发。
 	mainWindow.on('closed', () => {
@@ -41,6 +51,28 @@ function createWindow() {
 		// 通常会把多个 window 对象存放在一个数组里面，
 		// 与此同时，你应该删除相应的元素。
 		mainWindow = null
+	})
+
+	tray = new Tray(iconPath);
+
+	const contextMenu = Menu.buildFromTemplate([
+
+		{
+			label: "打开面板",
+			click() {
+				mainWindow.show()
+			}
+		},
+		{
+			label: "退出",
+			role: "quit"
+		}
+	]);
+
+	tray.setToolTip('矩阵元客户端');
+	tray.setContextMenu(contextMenu);
+	tray.on('double-click', () => { //双击显示
+		mainWindow.show();
 	})
 
 	//注册开发者工具快捷键
@@ -52,6 +84,24 @@ function createWindow() {
 			mode: 'undocked'
 		});
 	});
+
+};
+
+const shouldQuit = app.makeSingleInstance((commandLine, workingDirectory) => {
+	if(mainWindow) {
+		if(mainWindow.isMinimized()) {
+			mainWindow.restore();
+		}
+		
+		if(!mainWindow.isVisible()){
+			mainWindow.show();
+		}
+		mainWindow.focus();
+	}
+})
+
+if(shouldQuit) {
+	app.quit();
 }
 
 // Electron 会在初始化后并准备
@@ -81,27 +131,42 @@ app.setAsDefaultProtocolClient('juzix');
 
 //最小化
 ipcMain.on('hide-window', () => {
+	mainWindow.hide();
+});
+
+//最小化
+ipcMain.on('minimize-window', () => {
 	mainWindow.minimize();
 });
 
 //dapp通讯
 ipcMain.on('event', (event, plugin, method, argsStr, callbackID, ability) => {
 	console.log(plugin, method, argsStr, callbackID, ability);
+	if(god[plugin]&&god[plugin][method]){
+		god[plugin][method](argsStr, (agrs) => {
+			console.log('callbackID,agrs', callbackID, agrs)
+			event.sender.send('callback', callbackID, agrs);
+		});
+	}else{
+		const msg=`${plugin}==>${method} is not undefined`;
+		console.warn(msg);
+		event.sender.send('callback', callbackID, {
+			code:-1,
+			data:'',
+			msg:msg,
+		});
+	};
 	
-	god[plugin][method](argsStr,(agrs)=>{
-		console.log('callbackID,agrs',callbackID,agrs)
-		event.sender.send('callback', callbackID,agrs);
-	});
 })
 
-//新建窗口
-ipcMain.on('open-window', () => {
-	mainWindow.minimize();
-});
+//dapp通讯
+ipcMain.on('setPhDev', (event, hDev) => {
+	god.wallet.data.hDev = hDev;
+	console.log('hDev', god.wallet.data.hDev);
+})
 
 function clearCache() {
-	let fs = require('fs'),
-		path = app.getPath('appData') + '/Electron/Cache',
+	let path = app.getPath('appData') + '/Electron/Cache',
 		files = [];
 	if(fs.existsSync(path)) {
 		files = fs.readdirSync(path);
@@ -110,6 +175,34 @@ function clearCache() {
 		});
 	}
 }
+
+//安装驱动
+function autoRunDriver() {
+	var driverPath = path.join(app.getPath('exe'), '..', 'JuZhenUSBKeyDriver_WD.exe');
+	var driverflagPath = path.join(app.getPath('exe'), '..', 'install_driver');
+	var needInstall = fs.existsSync(driverflagPath);
+
+	console.log('autoRunDriver', driverPath, needInstall);
+
+	if(needInstall) {
+		exec(driverPath, (error, stdout, stderr) => {
+			if(error) {
+				console.error(`exec error: ${error}`);
+			} else {
+				fs.unlink(driverflagPath, function(err) {
+					if(err) {
+						throw err;
+					}
+					console.log('重新安装驱动成功，现在重启electron', `stdout: ${stdout}`, `stderr: ${stderr}`);
+					app.relaunch({
+						args: process.argv.slice(1).concat(['--relaunch'])
+					})
+					app.exit(0)
+				})
+			}
+		});
+	}
+};
 
 /*
 import { autoUpdater } from 'electron-updater'
@@ -121,4 +214,4 @@ autoUpdater.on('update-downloaded', () => {
 app.on('ready', () => {
   if (process.env.NODE_ENV === 'production') autoUpdater.checkForUpdates()
 })
- */
+*/
