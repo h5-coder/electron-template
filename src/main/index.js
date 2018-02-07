@@ -147,32 +147,6 @@ ipcMain.on('minimize-window', () => {
 	mainWindow.minimize();
 });
 
-//dapp通讯
-ipcMain.on('event', (event, plugin, method, argsStr, callbackID, ability) => {
-	console.log(plugin, method, argsStr, callbackID, ability);
-	if(god[plugin]&&god[plugin][method]){
-		god[plugin][method](argsStr, (agrs) => {
-			console.log('callbackID,agrs', callbackID, agrs)
-			event.sender.send('callback', callbackID, agrs);
-		});
-	}else{
-		const msg=`${plugin}==>${method} is not undefined`;
-		console.warn(msg);
-		event.sender.send('callback', callbackID, {
-			code:-1,
-			data:'',
-			msg:msg,
-		});
-	};
-
-})
-
-//dapp通讯
-ipcMain.on('setPhDev', (event, hDev) => {
-	god.wallet.data.hDev = hDev;
-	console.log('hDev', god.wallet.data.hDev);
-})
-
 function clearCache() {
 	let path = app.getPath('appData') + '/Electron/Cache',
 		files = [];
@@ -182,7 +156,7 @@ function clearCache() {
 			fs.unlinkSync(path + "/" + file);
 		});
 	}
-}
+};
 
 //安装驱动
 function autoRunDriver() {
