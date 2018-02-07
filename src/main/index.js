@@ -36,7 +36,8 @@ function createWindow() {
 		resizable: false, //改变窗口size
 		webPreferences: {
 			webSecurity: false
-		}
+		},
+		show: false,//优雅地显示窗口
 	});
 
 	// 加载应用的 index.html
@@ -51,7 +52,14 @@ function createWindow() {
 		// 通常会把多个 window 对象存放在一个数组里面，
 		// 与此同时，你应该删除相应的元素。
 		mainWindow = null
-	})
+	});
+
+	//所有东西都加载完成时，显示窗口并聚焦在上面提醒用户
+	mainWindow.once('ready-to-show', () => {
+		mainWindow.show();
+		mainWindow.focus();
+	});
+
 
 	tray = new Tray(iconPath);
 
@@ -92,7 +100,7 @@ const shouldQuit = app.makeSingleInstance((commandLine, workingDirectory) => {
 		if(mainWindow.isMinimized()) {
 			mainWindow.restore();
 		}
-		
+
 		if(!mainWindow.isVisible()){
 			mainWindow.show();
 		}
@@ -156,7 +164,7 @@ ipcMain.on('event', (event, plugin, method, argsStr, callbackID, ability) => {
 			msg:msg,
 		});
 	};
-	
+
 })
 
 //dapp通讯
