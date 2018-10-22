@@ -8,7 +8,6 @@ const BASE = process.env.API_ROOT,
         login: `${USER_URL}login.do`,
         getMenuList: `${USER_URL}getMenus.do`,
         logout: `${USER_URL}logout.do`,
-
     };
 //登录
 export default {
