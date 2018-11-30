@@ -1,5 +1,4 @@
 import { nativeImage, app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu } from 'electron'
-import god from './god'
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
