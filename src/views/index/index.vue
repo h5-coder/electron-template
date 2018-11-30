@@ -81,7 +81,6 @@
 </script>
 
 <style lang="less" scoped>
-    @import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro');
 
     * {
         box-sizing: border-box;

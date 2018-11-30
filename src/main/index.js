@@ -20,8 +20,8 @@ const winURL = process.env.NODE_ENV === 'development' ?
 	`http://localhost:9080` :
 	`file://${__dirname}/index.html`,
 	iconPath = process.env.NODE_ENV === 'development' ?
-	`./static/images/48x48.png` :
-	path.join(app.getPath('exe'), '..', '48x48.png');
+	`./static/images/256x256.png` :
+	path.join(app.getPath('exe'), '..', '256x256.png');
 
 function createWindow() {
 	// 创建浏览器窗口。
