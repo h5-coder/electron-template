@@ -6,8 +6,9 @@
     "license": null,
     "main": "./dist/electron/main.js",
     "scripts": {
+        "win": "node build/build.js && electron-builder -w --x64",
         "mac": "node build/build.js && electron-builder --mac --arch=x64 ",
-        "linux": "node build/build.js && electron-builder --linux",
+        "linux": "node build/build.js && electron-builder --linux deb tar.xz",
         "build": "node build/build.js && electron-builder",
         "build:dir": "node build/build.js && electron-builder --dir",
         "build:clean": "cross-env BUILD_TARGET=clean node build/build.js",
