@@ -41,8 +41,8 @@ Page custom SetCustom LeaveCustom  ;自定义窗口，选择数据目录
 !insertmacro MUI_UNPAGE_INSTFILES
 
 ; 安装界面包含的语言设置
-
 !insertmacro MUI_LANGUAGE "English"
+!insertmacro MUI_LANGUAGE "SimpChinese"
 
 
 ; 安装预释放文件
@@ -63,7 +63,6 @@ SectionEnd
 
 Var OLD_PATH
 Var UNINSTALL_PROG
-Var OLD_VER
 
 Section "Template"
 ReadRegStr $R2 HKLM "${PRODUCT_UNINST_KEY}" "UninstallString"
@@ -78,11 +77,9 @@ ReadRegStr $R2 HKLM "${PRODUCT_UNINST_KEY}" "UninstallString"
         RMDir $OLD_PATH
     keep:
         ExecWait $R2
-
     none:
         Quit
     NO:
-
 
 SectionEnd
 
@@ -120,7 +117,9 @@ Section "SectionA" SecA
     ; MessageBox MB_OK "The location to store block data and the keystore file:$0"
 SectionEnd
 
-Function .Oninit
+Function .onInit
+  !insertmacro MUI_LANGDLL_DISPLAY
+
   InitPluginsDir
   File /oname=$PLUGINSDIR\setup.ini ".\setup.ini"
 FunctionEnd
@@ -198,6 +197,7 @@ SectionEnd
 #-- 根据 NSIS 脚本编辑规则，所有 Function 区段必须放置在 Section 区段之后编写，以避免安装程序出现未可预知的问题。--#
 
 Function un.onInit
+  !insertmacro MUI_UNGETLANGUAGE
   MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are you sure you want to completely remove $(^Name) and all its components?" IDYES +2
   Abort
   ;检测程序是否运行
@@ -210,8 +210,11 @@ Function un.onInit
 FunctionEnd
 
 Function un.onUninstSuccess
-  HideWindow
-  MessageBox MB_ICONINFORMATION|MB_OK "$(^Name) has been successfully removed from your computer."
+  ;HideWindow
+  MessageBox MB_ICONINFORMATION|MB_OK "Opening leftover data directories(backup before deleting!)" IDOK ok
+  ok:
+    ExecShell explore "$APPDATA\Template"
+
 FunctionEnd
 
 ; 以下是卸载程序通过安装日志卸载文件的专用函数，请不要随意修改
