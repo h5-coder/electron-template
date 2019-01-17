@@ -1,0 +1,301 @@
+; 该脚本使用 HM VNISEdit 脚本编辑器向导产生
+
+!include "LogicLib.nsh"
+
+; 安装程序初始定义常量
+!define PRODUCT_NAME "Template"
+!define PRODUCT_VERSION " 0.3.0.4"; 加版本号，开头多加一个空格！
+!define PRODUCT_PUBLISHER "https://github.com/lovely-man/electron-template<liangyanxiangde@163.com>"
+!define PRODUCT_WEB_SITE "https://github.com/lovely-man/"
+!define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\Template.exe"
+!define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
+!define PRODUCT_UNINST_ROOT_KEY "HKLM"
+
+SetCompressor lzma
+
+; ------ MUI 现代界面定义 (1.67 版本以上兼容) ------
+!include "MUI.nsh"
+
+; MUI 预定义常量
+!define MUI_ABORTWARNING
+!define MUI_ICON "icons\icon.ico"
+!define MUI_UNICON "icons\icon.ico"
+; !define MUI_WELCOMEFINISHPAGE_BITMAP "icons\bg.bmp" ;用于欢迎页面和完成页面的位图(推荐尺寸: 164x314 象素)
+
+; 欢迎页面
+!insertmacro MUI_PAGE_WELCOME
+; 许可协议页面
+!define MUI_LICENSEPAGE_CHECKBOX
+!insertmacro MUI_PAGE_LICENSE "softwareLicence.txt"
+; 安装目录选择页面
+!insertmacro MUI_PAGE_DIRECTORY
+
+Page custom SetCustom LeaveCustom  ;自定义窗口，选择数据目录
+; 安装过程页面
+!insertmacro MUI_PAGE_INSTFILES
+; 安装完成页面
+!define MUI_FINISHPAGE_RUN "$INSTDIR\Template.exe"
+!insertmacro MUI_PAGE_FINISH
+
+; 安装卸载过程页面
+!insertmacro MUI_UNPAGE_INSTFILES
+
+; 安装界面包含的语言设置
+
+!insertmacro MUI_LANGUAGE "English"
+
+
+; 安装预释放文件
+!insertmacro MUI_RESERVEFILE_INSTALLOPTIONS
+; ------ MUI 现代界面定义结束 ------
+
+Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
+OutFile "..\dist\${PRODUCT_NAME}-windows-amd64${PRODUCT_VERSION}.exe"
+InstallDir "$PROGRAMFILES\Template"
+InstallDirRegKey HKLM "${PRODUCT_UNINST_KEY}" "UninstallString"
+ShowInstDetails show
+ShowUnInstDetails show
+
+; 激活安装日志记录，该日志文件将会作为卸载文件的依据(注意，本区段必须放置在所有区段之前)
+Section "-LogSetOn"
+  LogSet on
+SectionEnd
+
+Var OLD_PATH
+Var UNINSTALL_PROG
+Var OLD_VER
+
+Section "Template"
+ReadRegStr $R2 HKLM "${PRODUCT_UNINST_KEY}" "UninstallString"
+    StrCmp $R2 "" NO YES
+    YES:
+        MessageBox MB_ICONQuESTION|MB_YESNO "The installer detected that Template is running. Need to stop and uninstall it to proceed with the new installation. Do you want to uninstall it now?" IDYES uninstall IDNO none
+    uninstall:
+        StrCpy $OLD_PATH $UNINSTALL_PROG -10
+        ExecWait '"$UNINSTALL_PROG" /S _?=$OLD_PATH' $0
+        DetailPrint "uninst.exe returned $0"
+        Delete "$UNINSTALL_PROG"
+        RMDir $OLD_PATH
+    keep:
+        ExecWait $R2
+
+    none:
+        Quit
+    NO:
+
+
+SectionEnd
+
+Section "MainSection" SEC01
+    SetOutPath "$INSTDIR"
+    SetOverwrite ifnewer
+    File "..\dist\win-unpacked\Template.exe"
+    CreateDirectory "$SMPROGRAMS\Template"
+    CreateShortCut "$SMPROGRAMS\Template\Template.lnk" "$INSTDIR\Template.exe"
+    CreateShortCut "$DESKTOP\Template.lnk" "$INSTDIR\Template.exe"
+    File /r "..\dist\win-unpacked\*.*"
+SectionEnd
+
+Section -AdditionalIcons
+    WriteIniStr "$INSTDIR\${PRODUCT_NAME}.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
+    CreateShortCut "$SMPROGRAMS\Template\Website.lnk" "$INSTDIR\${PRODUCT_NAME}.url"
+    CreateShortCut "$SMPROGRAMS\Template\Uninstall.lnk" "$INSTDIR\uninst.exe"
+SectionEnd
+
+Section -Post
+    WriteUninstaller "$INSTDIR\uninst.exe"
+    WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "" "$INSTDIR\Template.exe"
+    WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "Version" "${PRODUCT_VERSION}"
+    WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "UserDataPath" "$0"
+    WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
+    WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninst.exe"
+    WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\Template.exe"
+    WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
+    WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
+    WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
+SectionEnd
+
+Section "SectionA" SecA
+    ReadINIStr $0 "$PLUGINSDIR\setup.ini" "Field 2" State
+    ; MessageBox MB_OK "The location to store block data and the keystore file:$0"
+SectionEnd
+
+Function .Oninit
+  InitPluginsDir
+  File /oname=$PLUGINSDIR\setup.ini ".\setup.ini"
+FunctionEnd
+
+;Function .onInstSuccess
+;  ReadINIStr $0 "$PLUGINSDIR\setup.ini" "Field 2" State
+;   MessageBox MB_OK "存储PlatON区块数据及Keystore文件的2222位置为：$0"
+;   FileOpen $1 "C:\test\test.txt" w
+;   FileWrite $1 'load("test.il" "test")\r$\n'
+;   FileClose $1
+; FunctionEnd
+
+Function SetCustom
+; 判断勾选的组件，并把未勾选组件的安装路径控件设为不可用
+  SectionGetFlags ${SecA} $0
+  StrCmp $0 0 0 +2
+    WriteINIStr "$PLUGINSDIR\setup.ini" "Field 2" "Flags" "Disabled"
+  StrCmp $0 1 0 +2   ; 如果组件勾选了，还需要去掉 Disabled，这两行代码不能省略
+    WriteINIStr "$PLUGINSDIR\setup.ini" "Field 2" "Flags" "Disabled"
+
+; 预定义组件安装路径
+  WriteINIStr "$PLUGINSDIR\setup.ini" "Field 2" "State" "$APPDATA\Template"
+
+  InstallOptions::initDialog /NOUNLOAD "$PLUGINSDIR\setup.ini"
+  !insertmacro MUI_HEADER_TEXT "Please select a location to store the block data and the keystore file." ""
+  InstallOptions::show
+  Pop $R0
+
+FunctionEnd
+
+Function LeaveCustom
+
+  ReadINIStr $0 "$PLUGINSDIR\setup.ini" "Field 2" "State"
+  StrCmp $0 "" +2
+  ; 判断用户输入的路径是否合法。
+;   IfFileExists "$0\*" +3
+;       MessageBox MB_OK|MB_ICONSTOP "Invalid path!"
+;       Abort
+
+FunctionEnd
+
+
+/******************************
+ *  以下是安装程序的卸载部分  *
+ ******************************/
+
+; 根据安装日志卸载文件的调用宏
+!macro DelFileByLog LogFile
+  ifFileExists `${LogFile}` 0 +4
+    Push `${LogFile}`
+    Call un.DelFileByLog
+    Delete `${LogFile}`
+!macroend
+
+Section Uninstall
+  Delete "$INSTDIR\${PRODUCT_NAME}.url"
+
+  ; 调用宏只根据安装日志卸载安装程序自己安装过的文件
+  !insertmacro DelFileByLog "$INSTDIR\install.log"
+
+  ; 清除安装程序创建的且在卸载时可能为空的子目录，对于递归添加的文件目录，请由最内层的子目录开始清除(注意，不要带 /r 参数，否则会失去 DelFileByLog 的意义)
+  RMDir "$SMPROGRAMS\Template"
+  RMDir "$INSTDIR\resources\app.asar.unpacked"
+  RMDir "$INSTDIR\resources"
+  RMDir "$INSTDIR\Template_exe"
+  RMDir "$INSTDIR\locales"
+
+  RMDir "$INSTDIR"
+
+  DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
+  DeleteRegKey HKLM "${PRODUCT_DIR_REGKEY}"
+  SetAutoClose true
+SectionEnd
+
+#-- 根据 NSIS 脚本编辑规则，所有 Function 区段必须放置在 Section 区段之后编写，以避免安装程序出现未可预知的问题。--#
+
+Function un.onInit
+  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are you sure you want to completely remove $(^Name) and all its components?" IDYES +2
+  Abort
+  ;检测程序是否运行
+  FindProcDLL::FindProc "Template.exe"
+   Pop $R0
+   IntCmp $R0 1 0 no_run
+   MessageBox MB_ICONSTOP "卸载程序检测到 ${PRODUCT_NAME} 正在运行，请关闭之后再卸载！"
+   Quit
+   no_run:
+FunctionEnd
+
+Function un.onUninstSuccess
+  HideWindow
+  MessageBox MB_ICONINFORMATION|MB_OK "$(^Name) has been successfully removed from your computer."
+FunctionEnd
+
+; 以下是卸载程序通过安装日志卸载文件的专用函数，请不要随意修改
+Function un.DelFileByLog
+  Exch $R0
+  Push $R1
+  Push $R2
+  Push $R3
+  FileOpen $R0 $R0 r
+  ${Do}
+    FileRead $R0 $R1
+    ${IfThen} $R1 == `` ${|} ${ExitDo} ${|}
+    StrCpy $R1 $R1 -2
+    StrCpy $R2 $R1 11
+    StrCpy $R3 $R1 20
+    ${If} $R2 == "File: wrote"
+    ${OrIf} $R2 == "File: skipp"
+    ${OrIf} $R3 == "CreateShortCut: out:"
+    ${OrIf} $R3 == "created uninstaller:"
+      Push $R1
+      Push `"`
+      Call un.DelFileByLog.StrLoc
+      Pop $R2
+      ${If} $R2 != ""
+        IntOp $R2 $R2 + 1
+        StrCpy $R3 $R1 "" $R2
+        Push $R3
+        Push `"`
+        Call un.DelFileByLog.StrLoc
+        Pop $R2
+        ${If} $R2 != ""
+          StrCpy $R3 $R3 $R2
+          Delete /REBOOTOK $R3
+        ${EndIf}
+      ${EndIf}
+    ${EndIf}
+    StrCpy $R2 $R1 7
+    ${If} $R2 == "Rename:"
+      Push $R1
+      Push "->"
+      Call un.DelFileByLog.StrLoc
+      Pop $R2
+      ${If} $R2 != ""
+        IntOp $R2 $R2 + 2
+        StrCpy $R3 $R1 "" $R2
+        Delete /REBOOTOK $R3
+      ${EndIf}
+    ${EndIf}
+  ${Loop}
+  FileClose $R0
+  Pop $R3
+  Pop $R2
+  Pop $R1
+  Pop $R0
+FunctionEnd
+
+Function un.DelFileByLog.StrLoc
+  Exch $R0
+  Exch
+  Exch $R1
+  Push $R2
+  Push $R3
+  Push $R4
+  Push $R5
+  StrLen $R2 $R0
+  StrLen $R3 $R1
+  StrCpy $R4 0
+  ${Do}
+    StrCpy $R5 $R1 $R2 $R4
+    ${If} $R5 == $R0
+    ${OrIf} $R4 = $R3
+      ${ExitDo}
+    ${EndIf}
+    IntOp $R4 $R4 + 1
+  ${Loop}
+  ${If} $R4 = $R3
+    StrCpy $R0 ""
+  ${Else}
+    StrCpy $R0 $R4
+  ${EndIf}
+  Pop $R5
+  Pop $R4
+  Pop $R3
+  Pop $R2
+  Pop $R1
+  Exch $R0
+FunctionEnd

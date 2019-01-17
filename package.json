@@ -1,7 +1,7 @@
 {
     "name": "template",
     "version": "1.0.2",
-    "author": "liangyanxiang<liangyanxiang@juzix.io>",
+    "author": "liangyanxiang<liangyanxiang@163.com>",
     "description": "electron vue 模版项目",
     "license": null,
     "main": "./dist/electron/main.js",
@@ -28,6 +28,15 @@
         },
         "files": [
             "dist/electron/**/*"
+        ],
+        "extraFiles": [
+            {
+                "from": "build/icons/",
+                "to": "",
+                "filter": [
+                    "256x256.png"
+                ]
+            }
         ],
         "dmg": {
             "contents": [

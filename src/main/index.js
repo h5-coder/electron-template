@@ -10,7 +10,6 @@ clearCache(); //清理缓存。不然很坑爹
 
 if(process.env.NODE_ENV !== 'development') {
 	global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\');
-	//autoRunDriver();
 }
 // 保持一个对于 window 对象的全局引用，如果你不这样做，
 // 当 JavaScript 对象被垃圾回收， window 会被自动地关闭
@@ -76,7 +75,7 @@ function createWindow() {
 		}
 	]);
 
-	tray.setToolTip('矩阵元客户端');
+	tray.setToolTip('Template');
 	tray.setContextMenu(contextMenu);
 	tray.on('double-click', () => { //双击显示
 		mainWindow.show();
@@ -134,7 +133,7 @@ app.on('activate', () => {
 });
 
 //注册协议
-app.setAsDefaultProtocolClient('juzix');
+app.setAsDefaultProtocolClient('Template');
 
 //最小化
 ipcMain.on('hide-window', () => {
@@ -153,34 +152,6 @@ function clearCache() {
 		files = fs.readdirSync(path);
 		files.forEach(function(file, index) {
 			fs.unlinkSync(path + "/" + file);
-		});
-	}
-};
-
-//安装驱动
-function autoRunDriver() {
-	var driverPath = path.join(app.getPath('exe'), '..', 'JuZhenUSBKeyDriver_WD.exe');
-	var driverflagPath = path.join(app.getPath('exe'), '..', 'install_driver');
-	var needInstall = fs.existsSync(driverflagPath);
-
-	console.log('autoRunDriver', driverPath, needInstall);
-
-	if(needInstall) {
-		exec(driverPath, (error, stdout, stderr) => {
-			if(error) {
-				console.error(`exec error: ${error}`);
-			} else {
-				fs.unlink(driverflagPath, function(err) {
-					if(err) {
-						throw err;
-					}
-					console.log('重新安装驱动成功，现在重启electron', `stdout: ${stdout}`, `stderr: ${stderr}`);
-					app.relaunch({
-						args: process.argv.slice(1).concat(['--relaunch'])
-					})
-					app.exit(0)
-				})
-			}
 		});
 	}
 };
