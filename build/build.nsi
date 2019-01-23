@@ -55,6 +55,8 @@ InstallDir "$PROGRAMFILES\Template"
 InstallDirRegKey HKLM "${PRODUCT_UNINST_KEY}" "UninstallString"
 ShowInstDetails show
 ShowUnInstDetails show
+;程序以管理员的身份运行
+RequestExecutionLevel admin
 
 ; 激活安装日志记录，该日志文件将会作为卸载文件的依据(注意，本区段必须放置在所有区段之前)
 Section "-LogSetOn"
@@ -197,16 +199,30 @@ SectionEnd
 #-- 根据 NSIS 脚本编辑规则，所有 Function 区段必须放置在 Section 区段之后编写，以避免安装程序出现未可预知的问题。--#
 
 Function un.onInit
-  !insertmacro MUI_UNGETLANGUAGE
+    ; !insertmacro MUI_UNGETLANGUAGE
   MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are you sure you want to completely remove $(^Name) and all its components?" IDYES +2
   Abort
-  ;检测程序是否运行
-  FindProcDLL::FindProc "Template.exe"
-   Pop $R0
-   IntCmp $R0 1 0 no_run
-   MessageBox MB_ICONSTOP "卸载程序检测到 ${PRODUCT_NAME} 正在运行，请关闭之后再卸载！"
-   Quit
-   no_run:
+;   ;检测程序是否运行
+;   FindProcDLL::FindProc "Template.exe"
+;    Pop $R0
+;    IntCmp $R0 1 0 no_run
+;    MessageBox MB_ICONSTOP "卸载程序检测到 ${PRODUCT_NAME} 正在运行，请关闭之后再卸载！"
+;    Quit
+;    no_run:
+
+   ;关闭进程
+    CheckProc:
+        FindProcDLL::FindProc "Template.exe"
+        Pop $R0
+        IntCmp $R0 1 0 no_run
+        MessageBox MB_ICONEXCLAMATION|MB_YESNO   "卸载程序检测到 ${PRODUCT_NAME} 正在运行，请关闭之后再卸载！" IDYES kill IDNO none
+    kill:
+        KillProcDLL::KillProc "Template.exe"
+        Sleep 1000
+        Goto CheckProc
+    none:
+        Quit
+    no_run:
 FunctionEnd
 
 Function un.onUninstSuccess
