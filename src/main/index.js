@@ -28,7 +28,8 @@ function createWindow() {
 		width: 1200,
 		height: 740,
 		minWidth: 1200,
-		minHeight: 600,
+        minHeight: 600,
+        icon: iconPath,
 		useContentSize: true,
 		frame: false, //创建无边框窗口
 		resizable: false, //改变窗口size
