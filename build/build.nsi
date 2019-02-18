@@ -212,12 +212,12 @@ Function un.onInit
 
    ;关闭进程
     CheckProc:
-        FindProcDLL::FindProc "Template.exe"
+        killer::IsProcessRunning "Template.exe"
         Pop $R0
         IntCmp $R0 1 0 no_run
-        MessageBox MB_ICONEXCLAMATION|MB_YESNO   "卸载程序检测到 ${PRODUCT_NAME} 正在运行，请关闭之后再卸载！" IDYES kill IDNO none
+        MessageBox MB_ICONEXCLAMATION|MB_OKCANCEL   "${PRODUCT_NAME} 正在运行，点击OK关闭." IDYES kill IDNO none
     kill:
-        KillProcDLL::KillProc "Template.exe"
+        killer::KillProcess "Template.exe"
         Sleep 1000
         Goto CheckProc
     none:
