@@ -44,9 +44,25 @@ Page custom SetCustom LeaveCustom  ;自定义窗口，选择数据目录
 !insertmacro MUI_LANGUAGE "English"
 !insertmacro MUI_LANGUAGE "SimpChinese"
 
+LangString brandingText ${LANG_ENGLISH} "Install System:"
+LangString brandingText ${LANG_SimpChinese} "Install System:"
+LangString instInfo ${LANG_ENGLISH} "The installer detected that $(^Name) is running. Need to stop and uninstall it to proceed with the new installation. Do you want to uninstall it now?"
+LangString instInfo ${LANG_SimpChinese} "安装程序检测到 $(^Name) 正在运行，您必须将其卸载才能进行下一步安装，是否现在进行卸载？"
+LangString selectLocation ${LANG_ENGLISH} "Please select a location to store the block data and the keystore file."
+LangString selectLocation ${LANG_SimpChinese} "请选择存储区块数据及Keystore文件的位置."
+LangString UninstInfo ${LANG_ENGLISH} "Are you sure you want to completely remove $(^Name) and all its components?"
+LangString UninstInfo ${LANG_SimpChinese} "您确实要完全移除 $(^Name) ，及其所有的组件？"
+LangString UninstSuccess ${LANG_ENGLISH} "Has been successfully removed from your computer."
+LangString UninstSuccess ${LANG_SimpChinese} "已成功地从你的计算机移除。"
+LangString closeInfo ${LANG_ENGLISH} "${PRODUCT_NAME} is running, click OK to close."
+LangString closeInfo ${LANG_SimpChinese} "${PRODUCT_NAME} 正在运行，点击OK关闭."
+LangString openFileInfo ${LANG_ENGLISH} "Opening leftover data directories(backup before deleting!)"
+LangString openFileInfo ${LANG_SimpChinese} "打开剩余的数据目录(删除前注意备份)"
 
 ; 安装预释放文件
 !insertmacro MUI_RESERVEFILE_INSTALLOPTIONS
+!insertmacro MUI_RESERVEFILE_LANGDLL
+
 ; ------ MUI 现代界面定义结束 ------
 
 Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
@@ -57,6 +73,7 @@ ShowInstDetails show
 ShowUnInstDetails show
 ;程序以管理员的身份运行
 RequestExecutionLevel admin
+BrandingText "$(brandingText) ${PRODUCT_NAME}${PRODUCT_VERSION}"
 
 ; 激活安装日志记录，该日志文件将会作为卸载文件的依据(注意，本区段必须放置在所有区段之前)
 Section "-LogSetOn"
@@ -70,7 +87,7 @@ Section "Template"
 ReadRegStr $R2 HKLM "${PRODUCT_UNINST_KEY}" "UninstallString"
     StrCmp $R2 "" NO YES
     YES:
-        MessageBox MB_ICONQuESTION|MB_YESNO "The installer detected that Template is running. Need to stop and uninstall it to proceed with the new installation. Do you want to uninstall it now?" IDYES uninstall IDNO none
+        MessageBox MB_ICONQuESTION|MB_YESNO "$(instInfo)" IDYES uninstall IDNO none
     uninstall:
         StrCpy $OLD_PATH $UNINSTALL_PROG -10
         ExecWait '"$UNINSTALL_PROG" /S _?=$OLD_PATH' $0
@@ -120,7 +137,7 @@ Section "SectionA" SecA
 SectionEnd
 
 Function .onInit
-  !insertmacro MUI_LANGDLL_DISPLAY
+;   !insertmacro MUI_LANGDLL_DISPLAY
 
   InitPluginsDir
   File /oname=$PLUGINSDIR\setup.ini ".\setup.ini"
@@ -146,7 +163,7 @@ Function SetCustom
   WriteINIStr "$PLUGINSDIR\setup.ini" "Field 2" "State" "$APPDATA\Template"
 
   InstallOptions::initDialog /NOUNLOAD "$PLUGINSDIR\setup.ini"
-  !insertmacro MUI_HEADER_TEXT "Please select a location to store the block data and the keystore file." ""
+  !insertmacro MUI_HEADER_TEXT "$(selectLocation)" ""
   InstallOptions::show
   Pop $R0
 
@@ -199,8 +216,9 @@ SectionEnd
 #-- 根据 NSIS 脚本编辑规则，所有 Function 区段必须放置在 Section 区段之后编写，以避免安装程序出现未可预知的问题。--#
 
 Function un.onInit
+    #?卸载时从注册表读取安装时用户选择的语言
     ; !insertmacro MUI_UNGETLANGUAGE
-  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are you sure you want to completely remove $(^Name) and all its components?" IDYES +2
+  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "$(UninstInfo)" IDYES +2
   Abort
 ;   ;检测程序是否运行
 ;   FindProcDLL::FindProc "Template.exe"
@@ -215,7 +233,7 @@ Function un.onInit
         killer::IsProcessRunning "Template.exe"
         Pop $R0
         IntCmp $R0 1 0 no_run
-        MessageBox MB_ICONEXCLAMATION|MB_OKCANCEL   "${PRODUCT_NAME} 正在运行，点击OK关闭." IDYES kill IDNO none
+        MessageBox MB_ICONEXCLAMATION|MB_OKCANCEL "$(closeInfo)" IDYES kill IDNO none
     kill:
         killer::KillProcess "Template.exe"
         Sleep 1000
@@ -227,7 +245,7 @@ FunctionEnd
 
 Function un.onUninstSuccess
   ;HideWindow
-  MessageBox MB_ICONINFORMATION|MB_OK "Opening leftover data directories(backup before deleting!)" IDOK ok
+  MessageBox MB_ICONINFORMATION|MB_OK "$(openFileInfo)" IDOK ok
   ok:
     ExecShell explore "$APPDATA\Template"
 
