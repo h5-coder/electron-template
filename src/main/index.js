@@ -2,6 +2,8 @@ import { nativeImage, app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu } 
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { autoUpdater } from "electron-updater"
+
 const {
 	exec
 } = require('child_process');
@@ -94,22 +96,35 @@ function createWindow() {
 
 };
 
-const shouldQuit = app.makeSingleInstance((commandLine, workingDirectory) => {
-	if(mainWindow) {
-		if(mainWindow.isMinimized()) {
-			mainWindow.restore();
-		}
+const gotTheLock = app.requestSingleInstanceLock()
 
-		if(!mainWindow.isVisible()){
-			mainWindow.show();
-		}
-		mainWindow.focus();
-	}
-})
-
-if(shouldQuit) {
-	app.quit();
+if (!gotTheLock) {
+    app.quit()
+} else {
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+        // 当运行第二个实例时,将会聚焦到myWindow这个窗口
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore()
+            mainWindow.focus()
+        }
+    })
 }
+// const shouldQuit = app.makeSingleInstance((commandLine, workingDirectory) => {
+// 	if(mainWindow) {
+// 		if(mainWindow.isMinimized()) {
+// 			mainWindow.restore();
+// 		}
+
+// 		if(!mainWindow.isVisible()){
+// 			mainWindow.show();
+// 		}
+// 		mainWindow.focus();
+// 	}
+// })
+
+// if(shouldQuit) {
+// 	app.quit();
+// }
 
 // Electron 会在初始化后并准备
 // 创建浏览器窗口时，调用这个函数。
@@ -118,19 +133,19 @@ app.on('ready', createWindow);
 
 // 当全部窗口关闭时退出。
 app.on('window-all-closed', () => {
-	// 在 macOS 上，除非用户用 Cmd + Q 确定地退出，
-	// 否则绝大部分应用及其菜单栏会保持激活。
-	if(process.platform !== 'darwin') {
-		app.quit()
-	}
+    // 在 macOS 上，除非用户用 Cmd + Q 确定地退出，
+    // 否则绝大部分应用及其菜单栏会保持激活。
+    if (process.platform !== 'darwin') {
+        app.quit()
+    }
 });
 
 app.on('activate', () => {
-	// 在这文件，你可以续写应用剩下主进程代码。
-	// 也可以拆分成几个文件，然后用 require 导入。
-	if(mainWindow === null) {
-		createWindow()
-	}
+    // 在这文件，你可以续写应用剩下主进程代码。
+    // 也可以拆分成几个文件，然后用 require 导入。
+    if (mainWindow === null) {
+        createWindow()
+    }
 });
 
 //注册协议
@@ -138,33 +153,83 @@ app.setAsDefaultProtocolClient('Template');
 
 //最小化
 ipcMain.on('hide-window', () => {
-	mainWindow.hide();
+    mainWindow.hide();
 });
 
 //最小化
 ipcMain.on('minimize-window', () => {
-	mainWindow.minimize();
+    mainWindow.minimize();
 });
 
 function clearCache() {
-	let path = app.getPath('appData') + '/Electron/Cache',
-		files = [];
-	if(fs.existsSync(path)) {
-		files = fs.readdirSync(path);
-		files.forEach(function(file, index) {
-			fs.unlinkSync(path + "/" + file);
-		});
-	}
+    let path = app.getPath('appData') + '/Electron/Cache',
+        files = [];
+    if (fs.existsSync(path)) {
+        files = fs.readdirSync(path);
+        files.forEach(function (file, index) {
+            fs.unlinkSync(path + "/" + file);
+        });
+    }
 };
 
 /*
 import { autoUpdater } from 'electron-updater'
 
 autoUpdater.on('update-downloaded', () => {
-  autoUpdater.quitAndInstall()
+    autoUpdater.quitAndInstall()
 })
 
 app.on('ready', () => {
-  if (process.env.NODE_ENV === 'production') autoUpdater.checkForUpdates()
+    if (process.env.NODE_ENV === 'production') autoUpdater.checkForUpdates()
 })
 */
+updateHandle()
+// 检测更新，在你想要检查更新的时候执行，renderer事件触发后的操作自行编写
+function updateHandle() {
+    let message = {
+        error: '检查更新出错',
+        checking: '正在检查更新……',
+        updateAva: '检测到新版本，正在下载……',
+        updateNotAva: '现在使用的就是最新版本，不用更新',
+    };
+
+    autoUpdater.setFeedURL(`https://github.com/lovely-man/electron-template/releases`);
+    autoUpdater.on('error', function (error) {
+        sendUpdateMessage(message.error)
+    });
+    autoUpdater.on('checking-for-update', function () {
+        sendUpdateMessage(message.checking)
+    });
+    autoUpdater.on('update-available', function (info) {
+        sendUpdateMessage(message.updateAva)
+    });
+    autoUpdater.on('update-not-available', function (info) {
+        sendUpdateMessage(message.updateNotAva)
+    });
+
+    // 更新下载进度事件
+    autoUpdater.on('download-progress', function (progressObj) {
+        mainWindow.webContents.send('downloadProgress', progressObj)
+    })
+    autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName, releaseDate, updateUrl, quitAndUpdate) => {
+
+        ipcMain.on('isUpdateNow', (e, arg) => {
+            console.log(arguments);
+            console.log("开始更新");
+            autoUpdater.quitAndInstall();
+        });
+
+        mainWindow.webContents.send('isUpdateNow')
+    });
+
+    ipcMain.on("checkForUpdate", () => {
+        console.log('checkForUpdate')
+        //执行自动更新检查
+        autoUpdater.checkForUpdates();
+    })
+}
+
+// 通过main进程发送事件给renderer进程，提示更新信息
+function sendUpdateMessage(text) {
+    mainWindow.webContents.send('message', text)
+}
