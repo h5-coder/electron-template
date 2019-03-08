@@ -4,7 +4,7 @@
 
 ; 安装程序初始定义常量
 !define PRODUCT_NAME "Template"
-!define PRODUCT_VERSION " 0.3.0.4"; 加版本号，开头多加一个空格！
+!define PRODUCT_VERSION " 0.1.0.2"; 加版本号，开头多加一个空格！
 !define PRODUCT_PUBLISHER "https://github.com/lovely-man/electron-template<liangyanxiangde@163.com>"
 !define PRODUCT_WEB_SITE "https://github.com/lovely-man/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\Template.exe"
@@ -62,6 +62,7 @@ LangString openFileInfo ${LANG_SimpChinese} "打开剩余的数据目录(删除前注意备份)"
 ; 安装预释放文件
 !insertmacro MUI_RESERVEFILE_INSTALLOPTIONS
 !insertmacro MUI_RESERVEFILE_LANGDLL
+
 
 ; ------ MUI 现代界面定义结束 ------
 
