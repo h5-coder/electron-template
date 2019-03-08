@@ -1,18 +1,24 @@
-## 客户端 electron-template ##
+# 客户端 electron-template
 
-<p>electron-template项目用于作为客户端开的模版。</p>
+electron-template项目用于作为客户端开的模版。
 
-<h1>搭建跨平台桌面应用</h1>
-<p>仅仅使用JavaScript,HTML以及CSS</p>
-<hr />
-<h2>1.软件成分：</h2>
+## 搭建跨平台桌面应用
+
+仅仅使用JavaScript,HTML以及CSS
+
+-----
+
+### 1.软件成分：
+
 <div>
 	<span class="electron-versions-main">Electron: <strong>1.7.5</strong></span> &nbsp;&nbsp;&nbsp;
 	<span>Node: <strong>7.9.0</strong></span> &nbsp;&nbsp;&nbsp;
 	<span>Chromium: <strong>58.0.3029.110</strong></span> &nbsp;&nbsp;&nbsp;
 	<span>V8:<strong>5.8.283.38</strong></span>
 </div>
-<h2>2.前期工作</h2>
+
+### 2.前期工作
+
 <ol>
 	<li>git</li>
 	<li>node.js</li>
@@ -21,7 +27,7 @@
 	<li>翻墙工具</li>
 </ol>
 
-<h2>3 搭建开发环境</h2>
+### 3 搭建开发环境
 
 <pre>
 <code>
@@ -43,8 +49,10 @@ $ npm install&amp;&amp;npm run dev
 	<strong style="color: red;">打包会有问题，</strong>
 	<strong style="color: red;">打包会有问题，</strong> 找不到依赖的路径!!!
 </p>
-<h2>4.ipc</h2>
-<pre><code>
+
+### 4.ipc
+
+````js
 //main.js
 ipcMain.on('asynchronous-message', (event, arg) => {
   console.log(arg);  // prints "ping"
@@ -55,25 +63,26 @@ ipcMain.on('synchronous-message', (event, arg) => {
   console.log(arg);  // prints "ping"
   event.returnValue = 'pong';
 });
-</code></pre>
-<pre><code>
-<script>
-    const {ipcRenderer} = require('electron');
+````
 
-    console.log(ipcRenderer.sendSync('synchronous-message', 'ping')); 
+````js
+const {ipcRenderer} = require('electron');
 
-    ipcRenderer.on('asynchronous-reply', (event, arg) => {
-        console.log(arg); // prints "pong"
-    });
+console.log(ipcRenderer.sendSync('synchronous-message', 'ping'));
 
-    ipcRenderer.send('asynchronous-message', 'ping');
-</script>
-</code></pre>
-<h2>5.钱包和U-key</h2>
+ipcRenderer.on('asynchronous-reply', (event, arg) => {
+    console.log(arg); // prints "pong"
+});
 
-<h2>6.合约API</h2>
+ipcRenderer.send('asynchronous-message', 'ping');
+````
 
-<h2>7.相关链接</h2>
+### 5.钱包和U-key
+
+### 6.合约API
+
+### 7.相关链接
+
 <ol>
 	<li>
 		<p>electron官网</p>
@@ -83,28 +92,7 @@ ipcMain.on('synchronous-message', (event, arg) => {
 		<p>electron中文文档</p>
 		<a href="https://github.com/electron/electron/tree/1-6-x/docs-translations/zh-CN">https://github.com/electron/electron/tree/1-6-x/docs-translations/zh-CN</a>
 	</li>
-	<li>
-		<p>Web3 JavaScript app API</p>
-		<a href="https://github.com/ethereum/wiki/wiki/JavaScript-API">https://github.com/ethereum/wiki/wiki/JavaScript-API</a>
-	</li>
-	<li>
-		<p>Web3.js 中文文档</p>
-		<a href="http://web3.tryblockchain.org/index.html">http://web3.tryblockchain.org/index.html</a>
-	</li>
-	<li>
-		<p>key-manager develop分支</p>
-		<a href="http://192.168.9.66/Juzix-ethereum/key-manager/tree/develop">http://192.168.9.66/Juzix-ethereum/key-manager/tree/develop</a>
-	</li>
-	<li>
-		<p>RLP编码</p>
-		<a href="http://192.168.9.66/Juzix-ethereum/console-utility">http://192.168.9.66/Juzix-ethereum/console-utility</a>
-	</li>
 </ol>
-
-
-
-
-
 
 #### Build Setup
 

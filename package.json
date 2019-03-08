@@ -1,7 +1,7 @@
 {
     "name": "template",
-    "version": "1.4.01",
-    "author": "liangyanxiang<liangyanxiang@juzix.io>",
+    "version": "1.0.2",
+    "author": "liangyanxiang<liangyanxiang@163.com>",
     "description": "electron vue 模版项目",
     "license": null,
     "main": "./dist/electron/main.js",
@@ -21,12 +21,22 @@
     },
     "build": {
         "productName": "Template",
+        "buildVersion": "1.0.0.2",
         "appId": "org.simulatedgreg.electron-vue",
         "directories": {
             "output": "dist"
         },
         "files": [
             "dist/electron/**/*"
+        ],
+        "extraFiles": [
+            {
+                "from": "build/icons/",
+                "to": "",
+                "filter": [
+                    "256x256.png"
+                ]
+            }
         ],
         "dmg": {
             "contents": [
@@ -78,7 +88,7 @@
         "css-loader": "^0.28.11",
         "del": "^3.0.0",
         "devtron": "^1.4.0",
-        "electron": "^3.0.11",
+        "electron": "^3.1.0",
         "electron-builder": "^20.38.2",
         "electron-debug": "^1.4.0",
         "electron-devtools-installer": "^2.2.4",
