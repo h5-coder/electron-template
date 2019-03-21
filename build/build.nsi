@@ -4,12 +4,15 @@
 
 ; 安装程序初始定义常量
 !define PRODUCT_NAME "Template"
-!define PRODUCT_VERSION "1.0.2"; 加版本号，开头多加一个空格！
+!define PRODUCT_VERSION "1.0.3"
 !define PRODUCT_PUBLISHER "https://github.com/lovely-man/electron-template<liangyanxiangde@163.com>"
 !define PRODUCT_WEB_SITE "https://github.com/lovely-man/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\Template.exe"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
+!define OutFileSignSHA1   ".\CodeSign\SignTool sign /f .\CodeSign\${OutFileSignCertificate} /p ${OutFileSignPassword} /fd sha1   /t  http://timestamp.comodoca.com /v"
+
+!define OutFileSignSHA256 ".\CodeSign\SignTool sign /f .\CodeSign\${OutFileSignCertificate} /p ${OutFileSignPassword} /fd sha256 /tr http://timestamp.comodoca.com?td=sha256 /td sha256 /as /v"
 
 SetCompressor lzma
 
@@ -67,7 +70,7 @@ LangString openFileInfo ${LANG_SimpChinese} "打开剩余的数据目录(删除前注意备份)"
 ; ------ MUI 现代界面定义结束 ------
 
 Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
-OutFile "..\dist\${PRODUCT_NAME}-windows-amd64 ${PRODUCT_VERSION}.exe"
+OutFile "..\dist\${PRODUCT_NAME}-windows-amd64-${PRODUCT_VERSION}.exe"
 InstallDir "$PROGRAMFILES\Template"
 InstallDirRegKey HKLM "${PRODUCT_UNINST_KEY}" "UninstallString"
 ShowInstDetails show
@@ -75,6 +78,10 @@ ShowUnInstDetails show
 ;程序以管理员的身份运行
 RequestExecutionLevel admin
 BrandingText "$(brandingText) ${PRODUCT_NAME}${PRODUCT_VERSION}"
+
+;脚本完成后执行安装包的数字签名
+!finalize '${OutFileSignSHA1} "%1"'
+!finalize '${OutFileSignSHA256} "%1"'
 
 ; 激活安装日志记录，该日志文件将会作为卸载文件的依据(注意，本区段必须放置在所有区段之前)
 Section "-LogSetOn"

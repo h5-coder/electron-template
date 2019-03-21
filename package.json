@@ -1,15 +1,15 @@
 {
     "name": "template",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "author": "liangyanxiang<liangyanxiang@163.com>",
     "description": "electron vue 模版项目",
     "license": null,
     "main": "./dist/electron/main.js",
     "scripts": {
-        "win": "node build/build.js && electron-builder -w --x64",
+        "win": "node build/build.js && electron-builder -w --x64 -p onTag",
         "mac": "node build/build.js && electron-builder --mac --arch=x64 ",
         "linux": "node build/build.js && electron-builder --linux deb tar.xz",
-        "build": "node build/build.js && electron-builder -p always",
+        "build": "node build/build.js && electron-builder -p onTag",
         "build:dir": "node build/build.js && electron-builder --dir",
         "build:clean": "cross-env BUILD_TARGET=clean node build/build.js",
         "build:web": "cross-env BUILD_TARGET=web node build/build.js",
@@ -21,8 +21,8 @@
     },
     "build": {
         "productName": "Template",
-        "buildVersion": "1.0.2",
-        "appId": "org.simulatedgreg.electron-vue",
+        "buildVersion": "1.0.3",
+        "appId": "org.Template.electron-vue",
         "directories": {
             "output": "dist"
         },
@@ -58,19 +58,33 @@
         },
         "win": {
             "icon": "build/icons/icon.ico",
-            "publish": [{
-                "provider": "github",
-                "owner": "lovely-man",
-                "repo": "2e174c7dbb8c6ee399375c970312590fa9563ea9"
-            }]
+            "publish": [
+                {
+                    "provider": "github",
+                    "owner": "lovely-man",
+                    "repo": "electron-template",
+                    "token": "deeb1f6cda172e0d65db8de58453690e43c83fbd",
+                    "publishAutoUpdate": "true"
+                }
+            ]
         },
         "linux": {
             "icon": "build/icons"
-        }
+        },
+        "publish": [
+            {
+                "provider": "github",
+                "owner": "lovely-man",
+                "repo": "electron-template",
+                "token": "deeb1f6cda172e0d65db8de58453690e43c83fbd",
+                "publishAutoUpdate": "true"
+            }
+        ]
     },
     "dependencies": {
         "axios": "^0.18.0",
-        "electron-updater": "^4.0.6",
+        "electron-log": "^3.0.1",
+        "electron-updater": "^4.0.8",
         "element-ui": "^2.4.11",
         "ethereumjs-tx": "^1.3.7",
         "node-uuid": "^1.4.8",
