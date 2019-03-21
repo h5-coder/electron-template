@@ -1,6 +1,6 @@
 {
     "name": "template",
-    "version": "1.0.3",
+    "version": "0.6.1",
     "author": "liangyanxiang<liangyanxiang@163.com>",
     "description": "electron vue 模版项目",
     "license": null,
@@ -21,7 +21,7 @@
     },
     "build": {
         "productName": "Template",
-        "buildVersion": "1.0.3",
+        "buildVersion": "0.6.0.1",
         "appId": "org.Template.electron-vue",
         "directories": {
             "output": "dist"
@@ -61,12 +61,13 @@
             "publish": [
                 {
                     "provider": "github",
-                    "owner": "lovely-man",
-                    "repo": "electron-template",
-                    "token": "deeb1f6cda172e0d65db8de58453690e43c83fbd",
+                    "owner": "xuhuiyu1",
+                    "repo": "Samurai-autoupdate",
+                    "token": "caa312bac148a6d6a9166d9d34f00e18c6afc207",
                     "publishAutoUpdate": "true"
                 }
-            ]
+            ],
+            "artifactName": "${productName}_setup_${buildVersion}.${ext}"
         },
         "linux": {
             "icon": "build/icons"
@@ -74,9 +75,9 @@
         "publish": [
             {
                 "provider": "github",
-                "owner": "lovely-man",
-                "repo": "electron-template",
-                "token": "deeb1f6cda172e0d65db8de58453690e43c83fbd",
+                "owner": "xuhuiyu1",
+                "repo": "Samurai-autoupdate",
+                "token": "caa312bac148a6d6a9166d9d34f00e18c6afc207",
                 "publishAutoUpdate": "true"
             }
         ]

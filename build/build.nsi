@@ -4,7 +4,7 @@
 
 ; 安装程序初始定义常量
 !define PRODUCT_NAME "Template"
-!define PRODUCT_VERSION "1.0.3"
+!define PRODUCT_VERSION "0.6.0.0"
 !define PRODUCT_PUBLISHER "https://github.com/lovely-man/electron-template<liangyanxiangde@163.com>"
 !define PRODUCT_WEB_SITE "https://github.com/lovely-man/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\Template.exe"
