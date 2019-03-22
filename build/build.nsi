@@ -163,9 +163,9 @@ Function SetCustom
 ; 判断勾选的组件，并把未勾选组件的安装路径控件设为不可用
   SectionGetFlags ${SecA} $0
   StrCmp $0 0 0 +2
-    WriteINIStr "$PLUGINSDIR\setup.ini" "Field 2" "Flags" "Disabled"
+    WriteINIStr "$PLUGINSDIR\setup.ini" "Field 2" "Flags" ""
   StrCmp $0 1 0 +2   ; 如果组件勾选了，还需要去掉 Disabled，这两行代码不能省略
-    WriteINIStr "$PLUGINSDIR\setup.ini" "Field 2" "Flags" "Disabled"
+    WriteINIStr "$PLUGINSDIR\setup.ini" "Field 2" "Flags" ""
 
 ; 预定义组件安装路径
   WriteINIStr "$PLUGINSDIR\setup.ini" "Field 2" "State" "$APPDATA\Template"
@@ -217,7 +217,6 @@ Section Uninstall
   RMDir "$INSTDIR"
 
   DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
-  DeleteRegKey HKLM "${PRODUCT_DIR_REGKEY}"
   SetAutoClose true
 SectionEnd
 
@@ -252,10 +251,12 @@ Function un.onInit
 FunctionEnd
 
 Function un.onUninstSuccess
+  ReadRegStr $0 HKLM "${PRODUCT_DIR_REGKEY}" "UserDataPath"
+  DeleteRegKey HKLM "${PRODUCT_DIR_REGKEY}"
   ;HideWindow
   MessageBox MB_ICONINFORMATION|MB_OK "$(openFileInfo)" IDOK ok
   ok:
-    ExecShell explore "$APPDATA\Template"
+    ExecShell explore $0
 
 FunctionEnd
 
