@@ -1,6 +1,6 @@
 {
     "name": "template",
-    "version": "0.6.1",
+    "version": "0.6.2",
     "author": "liangyanxiang<liangyanxiang@163.com>",
     "description": "electron vue 模版项目",
     "license": null,
@@ -21,7 +21,7 @@
     },
     "build": {
         "productName": "Template",
-        "buildVersion": "0.6.0.1",
+        "buildVersion": "0.6.0.2",
         "appId": "org.Template.electron-vue",
         "directories": {
             "output": "dist"

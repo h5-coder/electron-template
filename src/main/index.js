@@ -13,7 +13,6 @@ import path from "path"
 import { autoUpdater } from "electron-updater"
 
 // const { exec } = require("child_process")
-const log = require("electron-log")
 clearCache() //清理缓存。不然很坑爹
 
 if (process.env.NODE_ENV !== "development") {
@@ -192,7 +191,7 @@ app.on('ready', () => {
     if (process.env.NODE_ENV === 'production') autoUpdater.checkForUpdates()
 })
 */
-
+const log = require("electron-log")
 autoUpdater.logger = log;
 autoUpdater.logger.transports.file.level = 'info';
 
